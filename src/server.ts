@@ -1,16 +1,18 @@
 import express from 'express'
-import { hostname } from 'node:os';
+import {connectDB} from './config/db.js'
+import  app  from './app.js'
+import dotenv from 'dotenv'
 
-// import app from './app.js'
-const app = express()
+dotenv.config()
 
-const port = 5000;
+const port = process.env.PORT? process.env.PORT : 8080;
 
-app.get('/collabHub' ,(req,res)=>{
-    res.send("Backend is running")
-    console.log(`Backend Is Running 🏃`)
-})
 
-app.listen(port,()=>{
+const serverStart = async()=>{
+    await connectDB();
+    app.listen(port,()=>{
     console.log(`Server is started 🚀 on ${port}`)
-})
+});
+}
+
+serverStart();
