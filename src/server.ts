@@ -7,7 +7,6 @@ dotenv.config()
 
 const port = process.env.PORT? process.env.PORT : 8080;
 
-
 const serverStart = async()=>{
     await connectDB();
     app.listen(port,()=>{
