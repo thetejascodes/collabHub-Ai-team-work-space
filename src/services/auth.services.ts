@@ -1,8 +1,5 @@
-import { error } from "node:console";
 import { User } from "../models/user.model.js";
 import { generateAccessToken, refreshAccessToken } from "../utils/jwt.js";
-import { email } from "zod";
-import { compare } from "bcrypt";
 
 export const registerUser = async (
   name: string,

@@ -1,6 +1,7 @@
 import type { Request,Response } from "express"
 import { registerUser,loginUser } from "../services/auth.services.js"
 import { registerValidator, loginValidator } from "../validators/validators.user.js"
+import { User } from "../models/user.model.js"
 
 export const register = async (req: Request, res: Response) => {
 
@@ -47,5 +48,17 @@ export const login = async(req:Request,res:Response)=>{
     accessToken,
     user
   })
+
+}
+export const getMyProfile = async (req:Request,res:Response) => {
+   const userId = (req as any).user.userId;
+
+  const user = await User.findById(userId).select("-password");
+
+  if (!user) {
+    return res.status(404).json({ message: "User not found" });
+  }
+
+  res.json(user);
 
 }
