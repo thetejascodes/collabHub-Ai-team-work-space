@@ -34,7 +34,7 @@ const workspaceMemberSchema = new Schema<IWorkspaceMember>({
   },
 });
 
-const workspaceSchema = new Schema<IWorkspace>(
+const workspaceSchema = new Schema<IWorkspaceDocument>(
   {
     name: {
       type: String,
@@ -75,3 +75,5 @@ workspaceSchema.pre('save', async function () {
         }
     }
 })
+
+export const Workspace = model<IWorkspaceDocument>('Workspace',workspaceSchema) 
