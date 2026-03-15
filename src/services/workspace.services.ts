@@ -1,4 +1,5 @@
 import {Workspace} from '../models/workspace.model.js'
+import mongoose from 'mongoose';
 export const createWorkspaceService = async (data: any) => {
   const workspace = await Workspace.create({
     name: data.name,
@@ -6,7 +7,7 @@ export const createWorkspaceService = async (data: any) => {
     owner: data.owner,
     members: [ {
         user: data.owner,
-        role: "admin"
+        role: "owner"
       }],
   });
   return workspace;
@@ -18,7 +19,8 @@ export const getMyWorkspaceService = async (userId: string)=>{
       {owner: userId},
       {"members.user":userId},
     ]
-  }).populate("owner","name email")
+  }).populate("owner", "name email")
+  .populate("members.user", "name email")
   .lean();
 
   return myWorkspaces;
@@ -32,6 +34,49 @@ export const getWorkspaceByIdService = async(workspaceId : string)=>{
   return workspaceById;
 } 
 
+
+export const inviteWorkspaceMemberService = async (data: any) => {
+
+  const { user, workspaceIdParams, userFromBody } = data;
+
+  if (user.role !== "owner" && user.role !== "admin") {
+    return "Only admin or owner can invite members";
+  }
+
+  if (!mongoose.Types.ObjectId.isValid(workspaceIdParams)) {
+    return "Invalid workspace ID";
+  }
+
+  if (!userFromBody?.userId) {
+    return "userId is required";
+  }
+
+  const workspaceById = await Workspace.findById(workspaceIdParams);
+
+  if (!workspaceById) {
+    return "Workspace not found";
+  }
+
+  const userIdFromBody = userFromBody.userId;
+
+  const alreadyMember = workspaceById.members.some(
+    member => member.user.toString() === userIdFromBody
+  );
+
+  if (alreadyMember) {
+    return "User is already member of workspace";
+  }
+
+  workspaceById.members.push({
+    user: userIdFromBody,
+    role: "member",
+    joinedAt: new Date()
+  });
+
+  await workspaceById.save();
+
+  return workspaceById;
+};
 
 
 
