@@ -24,6 +24,14 @@ export const getMyWorkspaceService = async (userId: string)=>{
   return myWorkspaces;
 };
 
+export const getWorkspaceByIdService = async(workspaceId : string)=>{
+  const workspaceById = await Workspace.findById(workspaceId)
+  .populate("owner","name email")
+  .populate("members.user","name email")
+  .lean()
+  return workspaceById;
+} 
+
 
 
 
