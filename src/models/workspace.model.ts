@@ -25,7 +25,7 @@ const workspaceMemberSchema = new Schema<IWorkspaceMember>({
   },
   role: {
     type: String,
-    enum: ["admin", "member"],
+    enum: ["owner","admin", "member"],
     default: "member",
   },
   joinedAt: {

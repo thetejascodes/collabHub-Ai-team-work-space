@@ -3,9 +3,11 @@ import {createWorkspace,getMyWorkspace, getWorkspaceById, inviteWorkspaceMember}
 import { authMiddleware } from '../middleware/auth.middleware.js'
 
 const router = Router()
+router.use(authMiddleware)
 
-router.post('/create',authMiddleware,createWorkspace)
-router.get('/myworkspaces',authMiddleware,getMyWorkspace)
-router.get('/getWorkpace/:workspaceId',authMiddleware,getWorkspaceById)
-router.post('/invite/:workspaceId',authMiddleware,inviteWorkspaceMember)
+router.post('/workspaces',createWorkspace)
+router.get('/workspaces/my',getMyWorkspace)
+router.get('/workspaces/:workspaceId',getWorkspaceById)
+router.post('/workspaces/:workspaceId/invite',inviteWorkspaceMember)
 export default router
+
