@@ -134,3 +134,26 @@ export const changeMemberRoleServices = async (data: any) => {
     throw error;
   }
 };
+
+export const leaveWorkspaceService = async (data: any) => {
+  try {
+    const { workspaceId, user } = data;
+    const workspace = await Workspace.findById(workspaceId);
+    if (!workspace) {
+      throw new Error("Workspace not found");
+    }
+
+    const isMember = workspace.members.some((m) => m.user.toString() === user);
+    if(!isMember){
+      throw new Error('You are not a member of this workspace')
+    }
+    workspace.members = workspace.members.filter(
+      (member) => member.user.toString() !== user,
+    );
+    await workspace.save();
+    return workspace;
+  } catch (error) {
+    console.error(error);
+    throw error;
+  }
+};
