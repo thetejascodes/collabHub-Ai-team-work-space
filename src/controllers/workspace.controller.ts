@@ -4,6 +4,7 @@ import {
   getWorkspaceByIdService,
   inviteWorkspaceMemberService,
   removeMemberFromWorkspaceServices,
+  changeMemberRoleServices
 } from "../services/workspace.services.js";
 
 import type { Request, Response } from "express";
@@ -100,6 +101,33 @@ export const removeMemberFromWorkspace = async (
     res.sendStatus(204);
   } catch (error) {
     console.error(error)
+    return res.status(500).json({
+      message: "Internal Server Error",
+    });
+  }
+};
+
+export const changeMemberRole = async (req: Request, res: Response) => {
+  try {
+    const userRole = (req as any).user.role;
+    const workspaceId = req.params.workspaceId as string;
+    const userIdFromBody = req.body.userId as string;
+    const roleFromBody = req.body.role as string;
+
+    const result = await changeMemberRoleServices({
+      userRole,
+      workspaceId,
+      userIdFromBody,
+      roleFromBody
+    });
+
+    return res.status(200).json({
+      message: "Member role updated successfully",
+      data: result
+    });
+
+  } catch (error) {
+    console.error(error);
     return res.status(500).json({
       message: "Internal Server Error",
     });

@@ -89,7 +89,7 @@ export const removeMemberFromWorkspaceServices = async (data: any) => {
     const memberExists = workspace.members.some(
       (m) => m.user.toString() === memberId,
     );
-    
+
     if (!memberExists) {
       throw new Error("Member not found in workspace");
     }
@@ -98,7 +98,39 @@ export const removeMemberFromWorkspaceServices = async (data: any) => {
       (m) => m.user.toString() !== memberId,
     );
     await workspace.save();
-
     return workspace;
+  }
+};
+
+export const changeMemberRoleServices = async (data: any) => {
+  try {
+    const { userRole, workspaceId, userIdFromBody, roleFromBody } = data;
+
+    if (userRole !== "admin") {
+      throw new Error("You are not allowed to change roles");
+    }
+
+    const workspace = await Workspace.findById(workspaceId);
+
+    if (!workspace) {
+      throw new Error("Workspace not found");
+    }
+
+    const member = workspace.members.find(
+      (m: any) => m.user.toString() === userIdFromBody,
+    );
+
+    if (!member) {
+      throw new Error("Member not found in workspace");
+    }
+
+    member.role = roleFromBody;
+
+    await workspace.save();
+
+    return member;
+  } catch (error) {
+    console.error(error);
+    throw error;
   }
 };
