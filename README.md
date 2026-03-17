@@ -96,15 +96,19 @@ Clean and modular service layer
 
 Scalable folder structure
 
-📂 Project Structure
+## 📂 Project Structure
+
+```bash
 src/
 │
-├── controllers/     # Handle request & response
-├── services/        # Business logic
-├── models/          # Database schemas
-├── routes/          # API routes
-├── middlewares/     # Auth & error handling
-└── utils/           # Helper functions
+├── controllers/      # Handles request & response
+├── services/         # Business logic layer
+├── models/           # Database schemas (Mongoose)
+├── routes/           # API route definitions
+├── middlewares/      # Authentication & error handling
+├── utils/            # Helper functions
+└── config/           # DB & environment configs
+```
 🚀 Future Features (Phase 2)
 🤖 AI Integration
 
