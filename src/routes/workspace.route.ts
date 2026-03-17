@@ -1,5 +1,5 @@
 import {Router} from 'express'
-import {changeMemberRole, createWorkspace,getMyWorkspace, getWorkspaceById, inviteWorkspaceMember, leaveWorkspace, removeMemberFromWorkspace} from '../controllers/workspace.controller.js'
+import {changeMemberRole, createWorkspace,deleteWorkspace,getMyWorkspace, getWorkspaceById, inviteWorkspaceMember, leaveWorkspace, removeMemberFromWorkspace} from '../controllers/workspace.controller.js'
 import { authMiddleware } from '../middleware/auth.middleware.js'
 
 const router = Router()
@@ -12,5 +12,6 @@ router.post('/workspaces/:workspaceId/invite',inviteWorkspaceMember)
 router.delete('/:workspaceId/member/:memberId',removeMemberFromWorkspace)
 router.patch('/:workspaceId/member-role',changeMemberRole)
 router.post('/:workspaceId/leave',leaveWorkspace)
+router.delete('/:workspaceId/delete',deleteWorkspace)
 export default router
 

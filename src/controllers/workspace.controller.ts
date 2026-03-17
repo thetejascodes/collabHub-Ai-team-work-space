@@ -5,7 +5,8 @@ import {
   inviteWorkspaceMemberService,
   removeMemberFromWorkspaceServices,
   changeMemberRoleServices,
-  leaveWorkspaceService
+  leaveWorkspaceService,
+  deleteWorkspaceServices,
 } from "../services/workspace.services.js";
 
 import type { Request, Response } from "express";
@@ -101,7 +102,7 @@ export const removeMemberFromWorkspace = async (
     });
     res.sendStatus(204);
   } catch (error) {
-    console.error(error)
+    console.error(error);
     return res.status(500).json({
       message: "Internal Server Error",
     });
@@ -119,14 +120,13 @@ export const changeMemberRole = async (req: Request, res: Response) => {
       userRole,
       workspaceId,
       userIdFromBody,
-      roleFromBody
+      roleFromBody,
     });
 
     return res.status(200).json({
       message: "Member role updated successfully",
-      data: result
+      data: result,
     });
-
   } catch (error) {
     console.error(error);
     return res.status(500).json({
@@ -135,20 +135,36 @@ export const changeMemberRole = async (req: Request, res: Response) => {
   }
 };
 
-export const leaveWorkspace = async(req:Request,res:Response)=>{
+export const leaveWorkspace = async (req: Request, res: Response) => {
   try {
     const workspaceId = req.params.workspaceId as string;
     const user = (req as any).user.userId;
     const workspace = await leaveWorkspaceService({
       workspaceId,
-      user
-    })
-    res.status(200).json(workspace)
-    
+      user,
+    });
+    res.status(200).json(workspace);
   } catch (error) {
-     console.error(error);
+    console.error(error);
     return res.status(500).json({
       message: "Internal Server Error",
     });
   }
-}
+};
+
+export const deleteWorkspace = async (req: Request, res: Response) => {
+  try {
+    const workspaceId = req.params.workspaceId as string;
+    const userId = (req as any).user.userId as string;
+    const workspace = await deleteWorkspaceServices({
+      workspaceId,
+      userId
+    })
+    res.status(204).json();
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({
+      message: "Internal Server Error",
+    });
+  }
+};

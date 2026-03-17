@@ -157,3 +157,21 @@ export const leaveWorkspaceService = async (data: any) => {
     throw error;
   }
 };
+
+export const deleteWorkspaceServices = async(data:any)=>{
+  try {
+    const {workspaceId,userId} = data;
+    const workspace = await Workspace.findById(workspaceId)
+    if(!workspace){
+      throw new Error('workspace not found')
+    }
+    if(workspace.owner.toString() !== userId){
+      throw new Error('Unauthorized: Only owner can delete workspace')
+    }
+    await Workspace.findByIdAndDelete(workspaceId)
+    return;
+  } catch (error) {
+    console.error(error);
+    throw error;
+  }
+}
