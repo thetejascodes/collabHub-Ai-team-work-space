@@ -33,7 +33,6 @@ export const getProjectsServices = async (data: any) => {
     sortBy = "createdAt",
     order = "desc",
   } = data;
-  console.log("Incoming cursor:", cursorCreatedAt, cursorId);
   const workspace = await Workspace.findById(workspaceId);
   if (!workspace) {
     throw new Error("Workspace not found");
