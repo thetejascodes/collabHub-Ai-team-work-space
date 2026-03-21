@@ -8,9 +8,12 @@ export interface IProjectCreate {
   settings?: Record<string, any>;
 }
 
-export interface IProject extends IProjectCreate, Document {
+export interface IProject extends Document, IProjectCreate {
   _id: Types.ObjectId;
+  createdAt: Date;   
+  updatedAt: Date;   
 }
+
 
 const projectSchema = new Schema<IProject>(
   {
@@ -34,11 +37,14 @@ const projectSchema = new Schema<IProject>(
       ref: "User",
     },
     settings: {
-      type: Object, 
+      type: Schema.Types.Mixed, 
       default: {},
     },
   },
   { timestamps: true }
 );
+
+
+projectSchema.index({ createdAt: -1, _id: -1 });
 
 export const Project = model<IProject>("Project", projectSchema);
