@@ -1,5 +1,5 @@
 import type { Request, Response } from "express";
-import { createProjectService, getProjectsServices } from "../services/project.services.js";
+import { createProjectService, getProjectService, getProjectsServices } from "../services/project.services.js";
 import { createProjectValidator } from "../validators/project.validator.js";
 
 export const createProject = async (req: Request, res: Response) => {
@@ -57,3 +57,17 @@ export const getProjectsController = async (req: Request, res: Response) => {
     });
   }
 };
+
+export const getProject = async(req:Request,res:Response) => {
+  try {
+    const projectId = req.params.projectId as string;
+    const user = (req as any).user;
+    const project = await getProjectService({
+      projectId,
+      user
+    })
+    res.status(200).json(project)
+  } catch (error) {
+    
+  }
+}

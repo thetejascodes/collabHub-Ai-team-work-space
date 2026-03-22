@@ -1,4 +1,4 @@
-import mongoose from "mongoose";
+import { Types } from "mongoose";
 import { Project } from "../models/project.model.js";
 import { Workspace } from "../models/workspace.model.js";
 
@@ -95,4 +95,28 @@ export const getProjectsServices = async (data: any) => {
     hasNextPage,
     limit: safeLimit,
   };
+};
+
+export const getProjectService = async (data: any) => {
+  try {
+    const { projectId, user } = data;
+    if (!Types.ObjectId.isValid(projectId)) {
+      throw new Error("Invalid project ID");
+    }
+    const project = await Project.findById(projectId)
+      .populate("workspaceId", "name")
+      .populate("leadId", "name email")
+      .lean();
+    if (!project) {
+      throw new Error("Not found");
+    }
+    const isLead = project?.leadId?._id.toString() === user.userId.toString();
+    if(!isLead){
+      throw new Error('Unauthorized access to project')
+    }
+    return project;
+  } catch (error) {
+    console.error(error);
+    throw error;
+  }
 };
