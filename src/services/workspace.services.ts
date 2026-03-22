@@ -1,6 +1,7 @@
 import { error } from "node:console";
 import { Workspace } from "../models/workspace.model.js";
 import mongoose from "mongoose";
+import ApiError from "../utils/apiError.utils.js";
 export const createWorkspaceService = async (data: any) => {
   const workspace = await Workspace.create({
     name: data.name,
@@ -39,21 +40,21 @@ export const inviteWorkspaceMemberService = async (data: any) => {
   const { user, workspaceIdParams, userFromBody } = data;
 
   if (user.role !== "owner" && user.role !== "admin") {
-    throw new Error("Only admin or owner can invite members");
+    throw ApiError.unauthorized("Only admin or owner can invite members")
   }
 
   if (!mongoose.Types.ObjectId.isValid(workspaceIdParams)) {
-    throw new Error("Invalid workspace ID");
+    throw ApiError.badRequest("Invalid workspace ID")
   }
 
   if (!userFromBody?.userId) {
-    throw new Error("userId is required");
+    throw ApiError.badRequest("userId is required")
   }
 
   const workspaceById = await Workspace.findById(workspaceIdParams);
 
   if (!workspaceById) {
-    throw new Error("Workspace not found");
+    throw ApiError.notFound("Workspace not found")
   }
 
   const userIdFromBody = userFromBody.userId;
@@ -63,7 +64,7 @@ export const inviteWorkspaceMemberService = async (data: any) => {
   );
 
   if (alreadyMember) {
-    throw new Error("User is already member of workspace");
+    throw ApiError.conflict("User is already member of workspace")
   }
 
   workspaceById.members.push({
@@ -84,14 +85,14 @@ export const removeMemberFromWorkspaceServices = async (data: any) => {
     const workspace = await Workspace.findById(workspaceId);
 
     if (!workspace) {
-      throw new Error("Workspace not found");
+      throw ApiError.notFound("Workspace not found")
     }
     const memberExists = workspace.members.some(
       (m) => m.user.toString() === memberId,
     );
 
     if (!memberExists) {
-      throw new Error("Member not found in workspace");
+      throw ApiError.notFound("Member not found in workspace")
     }
 
     workspace.members = workspace.members.filter(
@@ -103,17 +104,16 @@ export const removeMemberFromWorkspaceServices = async (data: any) => {
 };
 
 export const changeMemberRoleServices = async (data: any) => {
-  try {
-    const { userRole, workspaceId, userIdFromBody, roleFromBody } = data;
+  const { userRole, workspaceId, userIdFromBody, roleFromBody } = data;
 
     if (userRole !== "admin") {
-      throw new Error("You are not allowed to change roles");
+      throw ApiError.unauthorized("You are not allowed to change roles");
     }
 
     const workspace = await Workspace.findById(workspaceId);
 
     if (!workspace) {
-      throw new Error("Workspace not found");
+      throw ApiError.notFound("Workspace not found")
     }
 
     const member = workspace.members.find(
@@ -121,7 +121,7 @@ export const changeMemberRoleServices = async (data: any) => {
     );
 
     if (!member) {
-      throw new Error("Member not found in workspace");
+      throw ApiError.notFound("Member not found in workspace")
     }
 
     member.role = roleFromBody;
@@ -129,49 +129,35 @@ export const changeMemberRoleServices = async (data: any) => {
     await workspace.save();
 
     return member;
-  } catch (error) {
-    console.error(error);
-    throw error;
-  }
 };
 
 export const leaveWorkspaceService = async (data: any) => {
-  try {
-    const { workspaceId, user } = data;
+  const { workspaceId, user } = data;
     const workspace = await Workspace.findById(workspaceId);
     if (!workspace) {
-      throw new Error("Workspace not found");
+      throw ApiError.notFound("Workspace not found")
     }
 
     const isMember = workspace.members.some((m) => m.user.toString() === user);
     if(!isMember){
-      throw new Error('You are not a member of this workspace')
+      throw ApiError.notFound("Member not found")
     }
     workspace.members = workspace.members.filter(
       (member) => member.user.toString() !== user,
     );
     await workspace.save();
     return workspace;
-  } catch (error) {
-    console.error(error);
-    throw error;
-  }
 };
 
 export const deleteWorkspaceServices = async(data:any)=>{
-  try {
-    const {workspaceId,userId} = data;
+   const {workspaceId,userId} = data;
     const workspace = await Workspace.findById(workspaceId)
     if(!workspace){
-      throw new Error('workspace not found')
+      throw ApiError.notFound('workspace not found')
     }
     if(workspace.owner.toString() !== userId){
-      throw new Error('Unauthorized: Only owner can delete workspace')
+      throw ApiError.unauthorized('Unauthorized: Only owner can delete workspace')
     }
     await Workspace.findByIdAndDelete(workspaceId)
     return;
-  } catch (error) {
-    console.error(error);
-    throw error;
-  }
 }

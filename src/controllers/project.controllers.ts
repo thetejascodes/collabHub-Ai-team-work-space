@@ -1,36 +1,44 @@
-import type { Request, Response } from "express";
-import { createProjectService, getProjectService, getProjectsServices } from "../services/project.services.js";
+import type { Request, Response, NextFunction } from "express";
+import {
+  createProjectService,
+  getProjectService,
+  getProjectsServices,
+} from "../services/project.services.js";
 import { createProjectValidator } from "../validators/project.validator.js";
+import ApiError from "../utils/apiError.utils.js";
 
-export const createProject = async (req: Request, res: Response) => {
+export const createProject = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   try {
     const parsed = createProjectValidator.safeParse(req.body);
-    if(!parsed.success){
-        res.status(400).json(parsed.error)
+
+    if (!parsed.success) {
+      throw ApiError.badRequest(parsed.error.message);
     }
+
     const user = (req as any).user;
+
     const project = await createProjectService({
-      parsed,
+      ...parsed.data,
       user,
     });
+
     res.status(201).json(project);
   } catch (error) {
-    console.error(error);
-    return res.status(500).json({
-      message: "Internal Server Error",
-    });
+    next(error);
   }
 };
 
-export const getProjectsController = async (req: Request, res: Response) => {
+export const getProjectsController = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   try {
-    const {
-      limit,
-      cursorCreatedAt,
-      cursorId,
-      sortBy,
-      order,
-    } = req.query;
+    const { limit, cursorCreatedAt, cursorId, sortBy, order } = req.query;
 
     const workspaceId = req.params.workspaceId;
     const user = (req as any).user;
@@ -45,29 +53,32 @@ export const getProjectsController = async (req: Request, res: Response) => {
       order,
     });
 
-    return res.status(200).json({
+    res.status(200).json({
       success: true,
       message: "Projects fetched successfully",
       ...result,
     });
-  } catch (error: any) {
-    return res.status(400).json({
-      success: false,
-      message: error.message,
-    });
+  } catch (error) {
+    next(error);
   }
 };
 
-export const getProject = async(req:Request,res:Response) => {
+export const getProject = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   try {
     const projectId = req.params.projectId as string;
     const user = (req as any).user;
+
     const project = await getProjectService({
       projectId,
-      user
-    })
-    res.status(200).json(project)
+      user,
+    });
+
+    res.status(200).json(project);
   } catch (error) {
-    
+    next(error);
   }
-}
+};

@@ -1,64 +1,80 @@
-import type { Request,Response } from "express"
-import { registerUser,loginUser } from "../services/auth.services.js"
-import { registerValidator, loginValidator } from "../validators/validators.user.js"
-import { User } from "../models/user.model.js"
+import type { Request, Response, NextFunction } from "express";
+import { registerUser, loginUser } from "../services/auth.services.js";
+import { registerValidator, loginValidator } from "../validators/validators.user.js";
+import { User } from "../models/user.model.js";
+import ApiError from "../utils/apiError.utils.js";
 
-export const register = async (req: Request, res: Response) => {
+export const register = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const parsed = registerValidator.safeParse(req.body);
 
-  const parsed = registerValidator.safeParse(req.body)
+    if (!parsed.success) {
+      throw ApiError.badRequest(parsed.error.message);
+    }
 
-  if (!parsed.success) {
-    return res.status(400).json(parsed.error)
+    const { name, email, password } = parsed.data;
+
+    const { user, accessToken, refreshAccessToken } =
+      await registerUser(name, email, password);
+
+    res.cookie("refreshToken", refreshAccessToken, {
+      httpOnly: true,
+      sameSite: "strict",
+    });
+
+    res.status(201).json({
+      message: "User created",
+      accessToken,
+      user,
+    });
+  } catch (error) {
+    next(error);
   }
+};
 
-  const { name, email, password } = parsed.data
+export const login = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const parsed = loginValidator.safeParse(req.body);
 
-  const { user, accessToken, refreshAccessToken } = await registerUser(name, email, password)
+    if (!parsed.success) {
+      throw ApiError.badRequest(parsed.error.message);
+    }
 
-  res.cookie("refreshToken", refreshAccessToken, {
-    httpOnly: true,
-    sameSite: "strict"
-  })
+    const { email, password } = parsed.data;
 
-  res.status(201).json({
-    message: "User created",
-    accessToken,
-    user
-  })
-}
+    const { user, accessToken, refreshToken } =
+      await loginUser(email, password);
 
-export const login = async(req:Request,res:Response)=>{
+    res.cookie("refreshToken", refreshToken, {
+      httpOnly: true,
+      sameSite: "strict",
+    });
 
-  const parsed = loginValidator.safeParse(req.body)
-
-  if(!parsed.success){
-    return res.status(400).json(parsed.error)
+    res.json({
+      accessToken,
+      user,
+    });
+  } catch (error) {
+    next(error);
   }
+};
 
-  const {email,password} = parsed.data
+export const getMyProfile = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const userId = (req as any).user.userId;
 
-  const {user,accessToken,refreshToken} = await loginUser(email,password)
+    if (!userId) {
+      throw ApiError.unauthorized("User not authenticated");
+    }
 
-  res.cookie("refreshToken",refreshToken,{
-    httpOnly:true,
-    sameSite:"strict"
-  })
+    const user = await User.findById(userId).select("-password");
 
-  res.json({
-    accessToken,
-    user
-  })
+    if (!user) {
+      throw ApiError.notFound("User not found");
+    }
 
-}
-export const getMyProfile = async (req:Request,res:Response) => {
-   const userId = (req as any).user.userId;
-
-  const user = await User.findById(userId).select("-password");
-
-  if (!user) {
-    return res.status(404).json({ message: "User not found" });
+    res.json(user);
+  } catch (error) {
+    next(error);
   }
-
-  res.json(user);
-
-}
+};

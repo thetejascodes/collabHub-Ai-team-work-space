@@ -1,5 +1,6 @@
 import { User } from "../models/user.model.js";
 import { generateAccessToken, refreshAccessToken } from "../utils/jwt.js";
+import ApiError from "../utils/apiError.utils.js";
 
 export const registerUser = async (
   name: string,
@@ -8,7 +9,7 @@ export const registerUser = async (
 ) => {
   const existingUser = await User.findOne({ email });
   if (existingUser) {
-    throw new Error("User already exist");
+    throw ApiError.conflict("User already exist")
   }
   const user = await User.create({
     name,
@@ -28,11 +29,11 @@ export const registerUser = async (
 export const loginUser = async (email: string, password: string) => {
   const user = await User.findOne({ email });
   if (!user) {
-    throw new Error("Invalid credantials");
+    throw ApiError.unauthorized("Invalid credantials")
   }
   const isMatch = await user.comparePassword(password);
   if (!isMatch) {
-    throw new Error("Invalid credantials");
+    throw ApiError.unauthorized("Invalid credantials");
   }
   const accessToken = generateAccessToken(user._id.toString(), user.role);
   const refreshToken = refreshAccessToken(user._id.toString());

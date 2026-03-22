@@ -9,11 +9,12 @@ import {
   deleteWorkspaceServices,
 } from "../services/workspace.services.js";
 
-import type { Request, Response } from "express";
+import type { Request, Response, NextFunction } from "express";
 import { createWorkspaceValidator } from "../validators/workspace.validator.js";
 
-export const createWorkspace = async (req: Request, res: Response) => {
-  const parsed = createWorkspaceValidator.safeParse(req.body);
+export const createWorkspace = async (req: Request, res: Response, next:NextFunction) => {
+ try {
+   const parsed = createWorkspaceValidator.safeParse(req.body);
 
   if (!parsed.success) {
     return res.status(400).json(parsed.error);
@@ -27,10 +28,14 @@ export const createWorkspace = async (req: Request, res: Response) => {
   });
 
   return res.status(201).json(workspace);
+ } catch (error) {
+  next(error)
+ }
 };
 
-export const getMyWorkspace = async (req: Request, res: Response) => {
-  const userId = (req as any).user.userId;
+export const getMyWorkspace = async (req: Request, res: Response,next:NextFunction) => {
+  try {
+    const userId = (req as any).user.userId;
 
   const workspace = await getMyWorkspaceService(userId);
 
@@ -41,10 +46,14 @@ export const getMyWorkspace = async (req: Request, res: Response) => {
   }
 
   return res.status(200).json(workspace);
+  } catch (error) {
+    next(error)
+  }
 };
 
-export const getWorkspaceById = async (req: Request, res: Response) => {
-  const workspaceIdParams = req.params.workspaceId as string;
+export const getWorkspaceById = async (req: Request, res: Response,next:NextFunction) => {
+  try {
+    const workspaceIdParams = req.params.workspaceId as string;
 
   if (!workspaceIdParams) {
     return res.status(400).json({
@@ -55,9 +64,12 @@ export const getWorkspaceById = async (req: Request, res: Response) => {
   const workspace = await getWorkspaceByIdService(workspaceIdParams);
 
   return res.status(200).json(workspace);
+  } catch (error) {
+    next(error)
+  }
 };
 
-export const inviteWorkspaceMember = async (req: Request, res: Response) => {
+export const inviteWorkspaceMember = async (req: Request, res: Response, next:NextFunction) => {
   try {
     const workspaceIdParams = req.params.workspaceId;
     const user = (req as any).user;
@@ -78,17 +90,14 @@ export const inviteWorkspaceMember = async (req: Request, res: Response) => {
       workspace: result,
     });
   } catch (error) {
-    console.error(error);
-
-    return res.status(500).json({
-      message: "Internal Server Error",
-    });
+   next(error)
   }
 };
 
 export const removeMemberFromWorkspace = async (
   req: Request,
   res: Response,
+  next:NextFunction
 ) => {
   try {
     const workspaceId = req.params.workspaceId;
@@ -102,14 +111,11 @@ export const removeMemberFromWorkspace = async (
     });
     res.sendStatus(204);
   } catch (error) {
-    console.error(error);
-    return res.status(500).json({
-      message: "Internal Server Error",
-    });
+    next(error)
   }
 };
 
-export const changeMemberRole = async (req: Request, res: Response) => {
+export const changeMemberRole = async (req: Request, res: Response, next:NextFunction) => {
   try {
     const userRole = (req as any).user.role;
     const workspaceId = req.params.workspaceId as string;
@@ -128,14 +134,11 @@ export const changeMemberRole = async (req: Request, res: Response) => {
       data: result,
     });
   } catch (error) {
-    console.error(error);
-    return res.status(500).json({
-      message: "Internal Server Error",
-    });
+    next(error)
   }
 };
 
-export const leaveWorkspace = async (req: Request, res: Response) => {
+export const leaveWorkspace = async (req: Request, res: Response, next:NextFunction) => {
   try {
     const workspaceId = req.params.workspaceId as string;
     const user = (req as any).user.userId;
@@ -145,14 +148,11 @@ export const leaveWorkspace = async (req: Request, res: Response) => {
     });
     res.status(200).json(workspace);
   } catch (error) {
-    console.error(error);
-    return res.status(500).json({
-      message: "Internal Server Error",
-    });
+    next(error)
   }
 };
 
-export const deleteWorkspace = async (req: Request, res: Response) => {
+export const deleteWorkspace = async (req: Request, res: Response,next:NextFunction) => {
   try {
     const workspaceId = req.params.workspaceId as string;
     const userId = (req as any).user.userId as string;
@@ -162,9 +162,6 @@ export const deleteWorkspace = async (req: Request, res: Response) => {
     })
     res.status(204).json();
   } catch (error) {
-    console.error(error);
-    return res.status(500).json({
-      message: "Internal Server Error",
-    });
+    next(error)
   }
 };
