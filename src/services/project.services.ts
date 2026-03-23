@@ -1,39 +1,51 @@
-import { Types } from "mongoose";
+import { Types, type SortOrder } from "mongoose";
 import { Project } from "../models/project.model.js";
 import { Workspace } from "../models/workspace.model.js";
+import type { IWorkspaceDocument, IWorkspaceMember } from "../models/workspace.model.js";
 import ApiError from "../utils/apiError.utils.js";
-export const createProjectService = async (data: any) => {
-  const { user, name, description, workspaceId } = data;
 
-  if (!Types.ObjectId.isValid(workspaceId)) {
-    throw ApiError.badRequest("Invalid workspace ID");
-  }
+interface CreateProjectServiceInput {
+  name: string;
+  description?: string | undefined;
+  workspace: IWorkspaceDocument;
+}
 
-  const workspace = await Workspace.findById(workspaceId);
+interface GetProjectsServiceInput {
+  workspaceId: string;
+  limit?: number;
+  cursorCreatedAt?: string | undefined;
+  cursorId?: string | undefined;
+  sortBy?: string | undefined;
+  order?: string | undefined;
+}
 
-  if (!workspace) {
-    throw ApiError.notFound("Workspace not found");
-  }
+interface GetProjectServiceInput {
+  projectId: string;
+  user: Express.AuthUser;
+}
 
-  const userIsMemberOfWorkspace = workspace.members.some(
-    (member) => member.user.toString() === user.userId
-  );
+export const createProjectService = async (data: CreateProjectServiceInput) => {
+  const { name, description, workspace } = data;
 
-  if (!userIsMemberOfWorkspace) {
-    throw ApiError.forbidden("User is not member of workspace");
-  }
-
-  const project = await Project.create({
+  const projectPayload: {
+    name: string;
+    description?: string;
+    workspaceId: Types.ObjectId;
+  } = {
     name,
-    description,
-    workspaceId,
-  });
+    workspaceId: workspace._id,
+  };
+
+  if (description !== undefined) {
+    projectPayload.description = description;
+  }
+
+  const project = await Project.create(projectPayload);
 
   return project;
 };
-export const getProjectsServices = async (data: any) => {
+export const getProjectsServices = async (data: GetProjectsServiceInput) => {
   const {
-      user,
       workspaceId,
       limit = 10,
       cursorCreatedAt,
@@ -44,22 +56,10 @@ export const getProjectsServices = async (data: any) => {
     if (!Types.ObjectId.isValid(workspaceId)) {
       throw ApiError.badRequest("Invalid workspace ID");
     }
-    const workspace = await Workspace.findById(workspaceId);
-    if (!workspace) {
-      throw ApiError.notFound("Workspace not found");
-    }
-
-    const isMember = workspace.members.some((member: any) =>
-      member.user.equals(user.userId),
-    );
-
-    if (!isMember) {
-      throw ApiError.forbidden("Access denied");
-    }
 
     const safeLimit = Math.min(Number(limit), 50);
 
-    const query: any = {
+    const query: Record<string, unknown> = {
       workspaceId,
     };
 
@@ -75,8 +75,8 @@ export const getProjectsServices = async (data: any) => {
 
     const sortOrder = order === "asc" ? 1 : -1;
 
-    const sort: any = {
-      [sortBy]: sortOrder,
+    const sort: Record<string, SortOrder> = {
+      [sortBy]: sortOrder as SortOrder,
       _id: sortOrder,
     };
 
@@ -108,7 +108,7 @@ export const getProjectsServices = async (data: any) => {
     };
 };
 
-export const getProjectService = async (data: any) => {
+export const getProjectService = async (data: GetProjectServiceInput) => {
   const { projectId, user } = data;
     if (!Types.ObjectId.isValid(projectId)) {
       throw ApiError.badRequest("Invalid project ID");
@@ -120,7 +120,7 @@ export const getProjectService = async (data: any) => {
       .lean();
     const workspace = await Workspace.findById(project?.workspaceId);
 
-    const isMember = workspace?.members.some((member: any) =>
+    const isMember = workspace?.members.some((member: IWorkspaceMember) =>
       member.user.equals(user.userId),
     );
 

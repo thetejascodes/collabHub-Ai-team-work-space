@@ -19,7 +19,7 @@ export const authMiddleware = (
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_ACCESS_SECRET as string);
-    (req as any).user = decoded;
+    req.user = decoded as Express.AuthUser;
 
     next();
   } catch {

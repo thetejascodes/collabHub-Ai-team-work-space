@@ -19,11 +19,15 @@ export const createProject = async (
       throw ApiError.badRequest(parsed.error.message);
     }
 
-    const user = (req as any).user;
+    const workspace = req.workspace;
+
+    if (!workspace) {
+      throw ApiError.badRequest("Workspace is required");
+    }
 
     const project = await createProjectService({
       ...parsed.data,
-      user,
+      workspace,
     });
 
     res.status(201).json(project);
@@ -39,18 +43,19 @@ export const getProjectsController = async (
 ) => {
   try {
     const { limit, cursorCreatedAt, cursorId, sortBy, order } = req.query;
+    const workspace = req.workspace;
 
-    const workspaceId = req.params.workspaceId;
-    const user = (req as any).user;
+    if (!workspace) {
+      throw ApiError.badRequest("Workspace is required");
+    }
 
     const result = await getProjectsServices({
-      user,
-      workspaceId,
+      workspaceId: workspace._id.toString(),
       limit: limit ? Number(limit) : 10,
-      cursorCreatedAt,
-      cursorId,
-      sortBy,
-      order,
+      cursorCreatedAt: typeof cursorCreatedAt === "string" ? cursorCreatedAt : undefined,
+      cursorId: typeof cursorId === "string" ? cursorId : undefined,
+      sortBy: typeof sortBy === "string" ? sortBy : undefined,
+      order: typeof order === "string" ? order : undefined,
     });
 
     res.status(200).json({
@@ -70,7 +75,11 @@ export const getProject = async (
 ) => {
   try {
     const projectId = req.params.projectId as string;
-    const user = (req as any).user;
+    const user = req.user;
+
+    if (!user) {
+      throw ApiError.unauthorized("Unauthorized");
+    }
 
     const project = await getProjectService({
       projectId,

@@ -2,7 +2,7 @@ import { Schema, model, Document, Types } from "mongoose";
 
 export interface IWorkspaceMember {
   user: Types.ObjectId;
-  role: "admin" | "member";
+  role: "owner" | "admin" | "member";
   joinedAt: Date;
 }
 

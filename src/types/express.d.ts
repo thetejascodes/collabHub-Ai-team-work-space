@@ -1,9 +1,21 @@
-import { IUserDocument } from "../models/user.model.ts";
+import type { HydratedDocument } from "mongoose";
+import type { IWorkspaceDocument, IWorkspaceMember } from "../models/workspace.model.js";
 
 declare global {
   namespace Express {
+    interface AuthUser {
+      userId: string;
+      email?: string;
+      name?: string;
+      role?: string;
+      iat?: number;
+      exp?: number;
+    }
+
     interface Request {
-      user?: IUserDocument;
+      user?: AuthUser;
+      workspace?: HydratedDocument<IWorkspaceDocument>;
+      workspaceMember?: IWorkspaceMember;
     }
   }
 }
