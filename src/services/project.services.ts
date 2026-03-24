@@ -156,13 +156,12 @@ export const updateProjectService = async(data:UpdateProjectServiceInput) => {
   return project;
 }
 
-export const deleteProjectService = async(data:any)=>{
-  const { projectId } = data as DeleteProjectServiceInput;
-
+export const deleteProjectService = async(data:DeleteProjectServiceInput)=>{
+  const { projectId } = data;
   if (!Types.ObjectId.isValid(projectId)) {
     throw ApiError.badRequest("Invalid project ID");
   }
-
+  
   const project = await Project.findByIdAndDelete(projectId);
 
   if (!project) {
