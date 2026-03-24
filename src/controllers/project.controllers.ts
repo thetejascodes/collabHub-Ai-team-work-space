@@ -1,6 +1,7 @@
 import type { Request, Response, NextFunction } from "express";
 import {
   createProjectService,
+  deleteProjectService,
   getProjectService,
   getProjectsServices,
   updateProjectService,
@@ -112,3 +113,25 @@ export const updateProject = async(req:Request,res:Response,next:NextFunction)=>
     next(error)
   }
 }
+
+export const deleteProject = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const projectId = req.params.projectId as string;
+
+    if (typeof projectId !== "string") {
+      throw ApiError.badRequest("Project ID is required");
+    }
+
+    await deleteProjectService({
+      projectId,
+    });
+
+    res.status(204).json();
+  } catch (error) {
+    next(error);
+  }
+};

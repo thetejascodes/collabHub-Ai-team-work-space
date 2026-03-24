@@ -28,6 +28,10 @@ interface UpdateProjectServiceInput {
     description?:string,
     leadId?:string
 }
+
+interface DeleteProjectServiceInput {
+  projectId: string;
+}
 export const createProjectService = async (data: CreateProjectServiceInput) => {
   const { name, description, workspace } = data;
 
@@ -148,6 +152,22 @@ export const updateProjectService = async(data:UpdateProjectServiceInput) => {
   if (!project) {
     throw ApiError.notFound("Project not found or access denied");
   }
-  
+
   return project;
 }
+
+export const deleteProjectService = async(data:any)=>{
+  const { projectId } = data as DeleteProjectServiceInput;
+
+  if (!Types.ObjectId.isValid(projectId)) {
+    throw ApiError.badRequest("Invalid project ID");
+  }
+
+  const project = await Project.findByIdAndDelete(projectId);
+
+  if (!project) {
+    throw ApiError.notFound("Project not found");
+  }
+
+  return;
+};

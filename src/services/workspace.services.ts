@@ -36,6 +36,12 @@ interface DeleteWorkspaceServiceInput {
   workspace: IWorkspaceDocument;
 }
 
+interface UpdateWorkspaceServiceInput {
+  workspace: IWorkspaceDocument;
+  name?: string | undefined;
+  description?: string | undefined;
+}
+
 export const createWorkspaceService = async (data: CreateWorkspaceServiceInput) => {
   const workspacePayload: {
     name: string;
@@ -156,6 +162,22 @@ export const leaveWorkspaceService = async (data: LeaveWorkspaceServiceInput) =>
     );
     await workspace.save();
     return workspace;
+};
+
+export const updateWorkspaceService = async (data: UpdateWorkspaceServiceInput) => {
+  const { workspace, name, description } = data;
+
+  if (name !== undefined) {
+    workspace.name = name;
+  }
+
+  if (description !== undefined) {
+    workspace.description = description;
+  }
+
+  await workspace.save();
+
+  return workspace;
 };
 
 export const deleteWorkspaceServices = async(data: DeleteWorkspaceServiceInput)=>{

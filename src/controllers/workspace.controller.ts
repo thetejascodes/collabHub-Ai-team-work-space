@@ -7,10 +7,14 @@ import {
   changeMemberRoleServices,
   leaveWorkspaceService,
   deleteWorkspaceServices,
+  updateWorkspaceService,
 } from "../services/workspace.services.js";
 
 import type { Request, Response, NextFunction } from "express";
-import { createWorkspaceValidator } from "../validators/workspace.validator.js";
+import {
+  createWorkspaceValidator,
+  updateWorkspaceValidator,
+} from "../validators/workspace.validator.js";
 import ApiError from "../utils/apiError.utils.js";
 
 export const createWorkspace = async (
@@ -187,6 +191,35 @@ export const leaveWorkspace = async (
       user,
     });
     res.status(200).json(workspace);
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const updateWorkspace = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    const workspace = req.workspace;
+
+    if (!workspace) {
+      throw ApiError.badRequest("Workspace is required");
+    }
+
+    const parsed = updateWorkspaceValidator.safeParse(req.body);
+
+    if (!parsed.success) {
+      throw ApiError.badRequest(parsed.error.message);
+    }
+
+    const updatedWorkspace = await updateWorkspaceService({
+      workspace,
+      ...parsed.data,
+    });
+
+    return res.status(200).json(updatedWorkspace);
   } catch (error) {
     next(error);
   }
