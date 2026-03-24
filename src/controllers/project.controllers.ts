@@ -3,6 +3,7 @@ import {
   createProjectService,
   getProjectService,
   getProjectsServices,
+  updateProjectService,
 } from "../services/project.services.js";
 import { createProjectValidator } from "../validators/project.validator.js";
 import ApiError from "../utils/apiError.utils.js";
@@ -75,15 +76,9 @@ export const getProject = async (
 ) => {
   try {
     const projectId = req.params.projectId as string;
-    const user = req.user;
-
-    if (!user) {
-      throw ApiError.unauthorized("Unauthorized");
-    }
 
     const project = await getProjectService({
       projectId,
-      user,
     });
 
     res.status(200).json(project);
@@ -91,3 +86,29 @@ export const getProject = async (
     next(error);
   }
 };
+
+export const updateProject = async(req:Request,res:Response,next:NextFunction)=>{
+  try {
+    const projectId = req.params.projectId as string;
+    const {name,description,leadId} = req.body;
+
+    if (typeof projectId !== "string") {
+      throw ApiError.badRequest("Project ID is required");
+    }
+    
+    if(!name && !description && !leadId){
+      throw ApiError.badRequest('At least one field is required to update')
+    }
+    
+    const result = await updateProjectService({
+      projectId,
+      name,
+      description,
+      leadId
+    });
+
+    res.status(200).json(result);
+  } catch (error) {
+    next(error)
+  }
+}

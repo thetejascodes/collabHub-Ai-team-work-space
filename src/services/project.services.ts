@@ -1,7 +1,6 @@
 import { Types, type SortOrder } from "mongoose";
 import { Project } from "../models/project.model.js";
-import { Workspace } from "../models/workspace.model.js";
-import type { IWorkspaceDocument, IWorkspaceMember } from "../models/workspace.model.js";
+import type { IWorkspaceDocument } from "../models/workspace.model.js";
 import ApiError from "../utils/apiError.utils.js";
 
 interface CreateProjectServiceInput {
@@ -21,9 +20,14 @@ interface GetProjectsServiceInput {
 
 interface GetProjectServiceInput {
   projectId: string;
-  user: Express.AuthUser;
 }
 
+interface UpdateProjectServiceInput {
+  projectId:string,
+    name?:string,
+    description?:string,
+    leadId?:string
+}
 export const createProjectService = async (data: CreateProjectServiceInput) => {
   const { name, description, workspace } = data;
 
@@ -109,7 +113,7 @@ export const getProjectsServices = async (data: GetProjectsServiceInput) => {
 };
 
 export const getProjectService = async (data: GetProjectServiceInput) => {
-  const { projectId, user } = data;
+  const { projectId } = data;
     if (!Types.ObjectId.isValid(projectId)) {
       throw ApiError.badRequest("Invalid project ID");
     }
@@ -118,18 +122,32 @@ export const getProjectService = async (data: GetProjectServiceInput) => {
       .populate("workspaceId", "name")
       .populate("leadId", "name email")
       .lean();
-    const workspace = await Workspace.findById(project?.workspaceId);
 
-    const isMember = workspace?.members.some((member: IWorkspaceMember) =>
-      member.user.equals(user.userId),
-    );
-
-    if (!isMember) {
-      throw ApiError.forbidden("Access denied");
-    }
     if (!project) {
       throw ApiError.notFound("Project not found");
     }
 
     return project;
 };
+
+export const updateProjectService = async(data:UpdateProjectServiceInput) => {
+  const {projectId,name,description,leadId} =  data;
+  if(!Types.ObjectId.isValid(projectId)){
+    throw ApiError.badRequest('Invalid project id')
+  }
+    if (leadId && !Types.ObjectId.isValid(leadId)) {
+    throw ApiError.badRequest("Invalid lead id");
+  }
+  const updateData : Record<string,any> = {};
+  if(name !== undefined) updateData.name = name;
+  if(description !== undefined) updateData.description = description;
+  if(leadId !== undefined) updateData.leadId = leadId;
+
+  const project = await Project.findByIdAndUpdate(projectId,updateData,{ new: true, runValidators: true })
+
+  if (!project) {
+    throw ApiError.notFound("Project not found or access denied");
+  }
+  
+  return project;
+}
