@@ -35,15 +35,7 @@ export const createTaskValidator = z.object({
 
   assignedTo: objectIdValidator("assignedTo").optional(),
 
-  createdBy: objectIdValidator("createdBy"),
-
   dueDate: optionalDateValidator,
-
-  completedAt: optionalDateValidator,
-
-  workspaceId: objectIdValidator("workspaceId"),
-
-  projectId: objectIdValidator("projectId"),
 });
 
 export const updateTaskValidator = z
