@@ -1,4 +1,4 @@
-import { Types } from "mongoose";
+import { Types, type SortOrder } from "mongoose";
 import { Project } from "../models/project.model.js";
 import { Task } from "../models/task.model.js";
 import ApiError from "../utils/apiError.utils.js";
@@ -13,6 +13,19 @@ interface TaskCreateServiceInput {
   workspaceId: string;
   projectId: string;
   createdBy: string;
+}
+
+interface GetTasksServiceInput {
+  workspaceId: string;
+  projectId?: string | undefined;
+  assignedTo?: string | undefined;
+  createdBy?: string | undefined;
+  status?: string | undefined;
+  priority?: string | undefined;
+  limit?: number | undefined;
+  cursorCreatedAt?: string | undefined;
+  cursorId?: string | undefined;
+  order?: string | undefined;
 }
 
 export const createTaskService = async (data: TaskCreateServiceInput) => {
@@ -93,4 +106,111 @@ export const createTaskService = async (data: TaskCreateServiceInput) => {
   const task = await Task.create(taskPayload);
 
   return task;
+};
+
+export const getTasksService = async (data: GetTasksServiceInput) => {
+  const {
+    workspaceId,
+    projectId,
+    assignedTo,
+    createdBy,
+    status,
+    priority,
+    limit = 3,
+    cursorCreatedAt,
+    cursorId,
+    order = "desc",
+  } = data;
+
+  if (!Types.ObjectId.isValid(workspaceId)) {
+    throw ApiError.badRequest("Invalid workspace ID");
+  }
+
+  if (projectId && !Types.ObjectId.isValid(projectId)) {
+    throw ApiError.badRequest("Invalid project ID");
+  }
+
+  if (assignedTo && !Types.ObjectId.isValid(assignedTo)) {
+    throw ApiError.badRequest("Invalid assignedTo ID");
+  }
+
+  if (createdBy && !Types.ObjectId.isValid(createdBy)) {
+    throw ApiError.badRequest("Invalid createdBy ID");
+  }
+
+  if (cursorId && !Types.ObjectId.isValid(cursorId)) {
+    throw ApiError.badRequest("Invalid cursor ID");
+  }
+
+  const safeLimit = Math.min(Number(limit), 50);
+  const query: Record<string, unknown> = { workspaceId };
+
+  if (projectId) {
+    query.projectId = projectId;
+  }
+
+  if (assignedTo) {
+    query.assignedTo = assignedTo;
+  }
+
+  if (createdBy) {
+    query.createdBy = createdBy;
+  }
+
+  if (status) {
+    query.status = status;
+  }
+
+  if (priority) {
+    query.priority = priority;
+  }
+
+  if (cursorCreatedAt && cursorId) {
+    const cursorDate = new Date(cursorCreatedAt);
+    const cursorComparison = order === "asc" ? "$gt" : "$lt";
+
+    query.$or = [
+      { createdAt: { [cursorComparison]: cursorDate } },
+      {
+        createdAt: cursorDate,
+        _id: { [cursorComparison]: new Types.ObjectId(cursorId) },
+      },
+    ];
+  }
+
+  const sortOrder = order === "asc" ? 1 : -1;
+  const sort: Record<string, SortOrder> = {
+    createdAt: sortOrder as SortOrder,
+    _id: sortOrder as SortOrder,
+  };
+
+  const tasks = await Task.find(query)
+    .populate("assignedTo", "name email")
+    .populate("createdBy", "name email")
+    .populate("projectId", "name")
+    .sort(sort)
+    .limit(safeLimit + 1);
+
+  let hasNextPage = false;
+
+  if (tasks.length > safeLimit) {
+    hasNextPage = true;
+    tasks.pop();
+  }
+
+  const lastTask = tasks[tasks.length - 1];
+  const nextCursor =
+    hasNextPage && lastTask
+      ? {
+          createdAt: lastTask.createdAt,
+          _id: lastTask._id,
+        }
+      : null;
+
+  return {
+    data: tasks,
+    nextCursor,
+    hasNextPage,
+    limit: safeLimit,
+  };
 };

@@ -38,6 +38,18 @@ export const createTaskValidator = z.object({
   dueDate: optionalDateValidator,
 });
 
+export const getTasksQueryValidator = z.object({
+  projectId: objectIdValidator("projectId").optional(),
+  assignedTo: objectIdValidator("assignedTo").optional(),
+  createdBy: objectIdValidator("createdBy").optional(),
+  status: taskStatusValidator.optional(),
+  priority: taskPriorityValidator.optional(),
+  limit: z.coerce.number().int().min(1).max(50).optional(),
+  cursorCreatedAt: z.string().datetime().optional(),
+  cursorId: objectIdValidator("cursorId").optional(),
+  order: z.enum(["asc", "desc"]).optional(),
+});
+
 export const updateTaskValidator = z
   .object({
     title: z
@@ -76,4 +88,5 @@ export const updateTaskValidator = z
   );
 
 export type CreateTaskInput = z.infer<typeof createTaskValidator>;
+export type GetTasksQueryInput = z.infer<typeof getTasksQueryValidator>;
 export type UpdateTaskInput = z.infer<typeof updateTaskValidator>;
