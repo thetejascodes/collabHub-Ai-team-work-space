@@ -1,5 +1,5 @@
 import type { Request, Response, NextFunction } from "express";
-import { createTaskService, getTasksService } from "../services/task.services.js";
+import { createTaskService, getTaskService, getTasksService } from "../services/task.services.js";
 import { createTaskValidator, getTasksQueryValidator } from "../validators/task.validator.js";
 import ApiError from "../utils/apiError.utils.js";
 
@@ -71,3 +71,33 @@ export const getTasks = async (
     next(error);
   }
 };
+export const getTask = async(req:Request,res:Response,next:NextFunction)=>{
+  try {
+    const workspaceId = req.params.workspaceId as string;
+    const taskId = req.params.taskId as string;
+    const projectId = req.params.projectId as string;
+    const userId = req.user?.userId as string;
+    const role = req.workspaceMember?.role as string;
+    if(!workspaceId){
+      throw ApiError.badRequest("Workspace is requred")
+    }
+    if(!taskId){
+      throw ApiError.badRequest("Task id is required")
+    }
+    if(!projectId){
+      throw ApiError.badRequest("Project id is required")
+    }
+    
+    const result = await getTaskService({
+      taskId,
+      workspaceId,
+      projectId,
+      userId,
+      role
+    })
+    res.status(200).json(result)
+    
+  } catch (error) {
+    next(error)
+  }
+}

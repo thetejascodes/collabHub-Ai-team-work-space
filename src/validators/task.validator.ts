@@ -50,6 +50,12 @@ export const getTasksQueryValidator = z.object({
   order: z.enum(["asc", "desc"]).optional(),
 });
 
+export const getTaskParamsValidator = z.object({
+  workspaceId: objectIdValidator("workspaceId"),
+  projectId: objectIdValidator("projectId"),
+  taskId: objectIdValidator("taskId"),
+});
+
 export const updateTaskValidator = z
   .object({
     title: z
@@ -88,5 +94,6 @@ export const updateTaskValidator = z
   );
 
 export type CreateTaskInput = z.infer<typeof createTaskValidator>;
+export type GetTaskParamsInput = z.infer<typeof getTaskParamsValidator>;
 export type GetTasksQueryInput = z.infer<typeof getTasksQueryValidator>;
 export type UpdateTaskInput = z.infer<typeof updateTaskValidator>;

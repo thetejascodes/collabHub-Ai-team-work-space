@@ -27,6 +27,13 @@ interface GetTasksServiceInput {
   cursorId?: string | undefined;
   order?: string | undefined;
 }
+interface GetTaskServiceInput{
+ taskId:string;
+ workspaceId:string;
+ projectId:string;
+ userId:string;
+ role:string;
+}
 
 export const createTaskService = async (data: TaskCreateServiceInput) => {
   const {
@@ -137,6 +144,7 @@ export const getTasksService = async (data: GetTasksServiceInput) => {
   if (createdBy && !Types.ObjectId.isValid(createdBy)) {
     throw ApiError.badRequest("Invalid createdBy ID");
   }
+  
 
   if (cursorId && !Types.ObjectId.isValid(cursorId)) {
     throw ApiError.badRequest("Invalid cursor ID");
@@ -213,4 +221,49 @@ export const getTasksService = async (data: GetTasksServiceInput) => {
     hasNextPage,
     limit: safeLimit,
   };
+};
+
+export const getTaskService = async (data: GetTaskServiceInput) => {
+  const { taskId, workspaceId, projectId, userId, role } = data;
+
+  if (!Types.ObjectId.isValid(taskId)) {
+    throw ApiError.badRequest("Invalid task id");
+  }
+  if (!Types.ObjectId.isValid(workspaceId)) {
+    throw ApiError.badRequest("Invalid workspace id");
+  }
+  if (!Types.ObjectId.isValid(projectId)) {
+    throw ApiError.badRequest("Invalid project id");
+  }
+  if (!Types.ObjectId.isValid(userId)) {
+    throw ApiError.badRequest("Invalid user id");
+  }
+
+  const task = await Task.findById(taskId)
+    .populate("assignedTo", "name email")
+    .populate("createdBy", "name email")
+    .populate("projectId", "name")
+    .lean();
+
+  if (!task) {
+    throw ApiError.notFound("Task not found");
+  }
+
+  if (task.workspaceId.toString() !== workspaceId) {
+    throw ApiError.badRequest("Task not found in this workspace");
+  }
+
+  if (task.projectId._id.toString() !== projectId) {
+    throw ApiError.badRequest("Task not found in this project");
+  }
+
+  const isCreator = task.createdBy._id.toString() === userId;
+  const isAssigned = task.assignedTo?._id?.toString() === userId;
+  const isAdmin = role === "admin";
+
+  if (!isCreator && !isAssigned && !isAdmin) {
+    throw ApiError.unauthorized("Unauthorized");
+  }
+
+  return task;
 };
