@@ -78,8 +78,13 @@ export const getTask = async(req:Request,res:Response,next:NextFunction)=>{
     const projectId = req.params.projectId as string;
     const userId = req.user?.userId as string;
     const role = req.workspaceMember?.role as string;
+
+    if (!req.workspace) {
+      throw ApiError.badRequest("Workspace is required");
+    }
+
     if(!workspaceId){
-      throw ApiError.badRequest("Workspace is requred")
+      throw ApiError.badRequest("Workspace is required")
     }
     if(!taskId){
       throw ApiError.badRequest("Task id is required")
