@@ -1,6 +1,6 @@
 import type { Request, Response, NextFunction } from "express";
-import { createTaskService, getTaskService, getTasksService } from "../services/task.services.js";
-import { createTaskValidator, getTasksQueryValidator } from "../validators/task.validator.js";
+import { createTaskService, getTaskService, getTasksService, updateTaskService } from "../services/task.services.js";
+import { createTaskValidator, getTasksQueryValidator, updateTaskValidator } from "../validators/task.validator.js";
 import ApiError from "../utils/apiError.utils.js";
 
 export const createTask = async (
@@ -106,3 +106,48 @@ export const getTask = async(req:Request,res:Response,next:NextFunction)=>{
     next(error)
   }
 }
+
+export const updateTask = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const workspaceId = req.params.workspaceId as string;
+    const taskId = req.params.taskId as string;
+    const projectId = req.params.projectId as string;
+    const userId = req.user?.userId as string;
+    const role = req.workspaceMember?.role as string;
+
+    if (!req.workspace) {
+      throw ApiError.badRequest("Workspace is required");
+    }
+
+    if (!workspaceId || !taskId || !projectId) {
+      throw ApiError.badRequest("Workspace ID, Project ID, and Task ID are required");
+    }
+
+    const parsed = updateTaskValidator.safeParse(req.body);
+
+    if (!parsed.success) {
+      throw ApiError.badRequest(parsed.error.message);
+    }
+
+    const result = await updateTaskService({
+      taskId,
+      workspaceId,
+      projectId,
+      userId,
+      role,
+      ...parsed.data,
+    });
+
+    res.status(200).json({
+      success: true,
+      message: "Task updated successfully",
+      task: result,
+    });
+  } catch (error) {
+    next(error);
+  }
+};

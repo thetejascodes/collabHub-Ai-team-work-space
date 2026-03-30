@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { createTask, getTask, getTasks } from "../controllers/task.controller.js";
+import { createTask, getTask, getTasks, updateTask } from "../controllers/task.controller.js";
 import { authMiddleware } from "../middleware/auth.middleware.js";
 import { checkWorkspaceAccess } from "../middleware/checkWorkspaceAccess.middleware.js";
 
@@ -28,6 +28,12 @@ router.post(
   authMiddleware,
   checkWorkspaceAccess(),
   createTask
+);
+router.patch(
+  "/workspace/:workspaceId/project/:projectId/tasks/:taskId",
+  authMiddleware,
+  checkWorkspaceAccess(),
+  updateTask
 );
 
 export default router;

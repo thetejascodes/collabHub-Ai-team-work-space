@@ -35,6 +35,21 @@ interface GetTaskServiceInput{
  role:string;
 }
 
+interface UpdateTaskServiceInput {
+  taskId: string;
+  workspaceId: string;
+  projectId: string;
+  userId: string;
+  role: string;
+  title?: string | undefined;
+  description?: string | undefined;
+  status?: string | undefined;
+  priority?: string | undefined;
+  dueDate?: Date | string | undefined;
+  assignedTo?: string | undefined;
+  completedAt?: Date | string | undefined;
+}
+
 export const createTaskService = async (data: TaskCreateServiceInput) => {
   const {
     title,
@@ -266,4 +281,56 @@ export const getTaskService = async (data: GetTaskServiceInput) => {
   }
 
   return task;
+};
+
+export const updateTaskService = async (data: UpdateTaskServiceInput) => {
+  const {
+    taskId,
+    workspaceId,
+    projectId,
+    userId,
+    role,
+    ...updateFields
+  } = data;
+
+  if (!Types.ObjectId.isValid(taskId)) {
+    throw ApiError.badRequest("Invalid task id");
+  }
+
+  const existingTask = await Task.findById(taskId);
+
+  if (!existingTask) {
+    throw ApiError.notFound("Task not found");
+  }
+
+  if (existingTask.workspaceId.toString() !== workspaceId) {
+    throw ApiError.badRequest("Task not found in this workspace");
+  }
+
+  if (existingTask.projectId.toString() !== projectId) {
+    throw ApiError.badRequest("Task not found in this project");
+  }
+
+  const isCreator = existingTask.createdBy.toString() === userId;
+  const isAssigned = existingTask.assignedTo?.toString() === userId;
+  const isAdmin = role === "admin";
+
+  if (!isCreator && !isAssigned && !isAdmin) {
+    throw ApiError.unauthorized("Unauthorized to update this task");
+  }
+
+  if (updateFields.assignedTo && !Types.ObjectId.isValid(updateFields.assignedTo)) {
+    throw ApiError.badRequest("Invalid assignedTo ID");
+  }
+
+  const updatedTask = await Task.findByIdAndUpdate(
+    taskId,
+    { $set: updateFields },
+    { new: true }
+  )
+    .populate("assignedTo", "name email")
+    .populate("createdBy", "name email")
+    .populate("projectId", "name");
+
+  return updatedTask;
 };
