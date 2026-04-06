@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { createTask, getTask, getTasks, updateTask } from "../controllers/task.controller.js";
+import { createTask, deleteTask, getTask, getTasks, updateTask } from "../controllers/task.controller.js";
 import { authMiddleware } from "../middleware/auth.middleware.js";
 import { checkWorkspaceAccess } from "../middleware/checkWorkspaceAccess.middleware.js";
 
@@ -35,5 +35,6 @@ router.patch(
   checkWorkspaceAccess(),
   updateTask
 );
+router.delete("/workspace/:workspaceId/project/:projectId/tasks/:taskId",authMiddleware,checkWorkspaceAccess(),deleteTask)
 
 export default router;

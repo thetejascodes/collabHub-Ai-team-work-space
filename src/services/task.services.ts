@@ -49,7 +49,14 @@ interface UpdateTaskServiceInput {
   assignedTo?: string | undefined;
   completedAt?: Date | string | undefined;
 }
+interface DeleteTaskServiceInput{
+  taskId:string;
+  workspaceId:string;
+  projectId:string;
+  userId:string;
+  role:string;
 
+}
 export const createTaskService = async (data: TaskCreateServiceInput) => {
   const {
     title,
@@ -334,3 +341,40 @@ export const updateTaskService = async (data: UpdateTaskServiceInput) => {
 
   return updatedTask;
 };
+
+export const deleteTaskService = async(data:DeleteTaskServiceInput) => {
+  const {taskId,projectId,workspaceId,userId,role} = data
+  if(!Types.ObjectId.isValid(taskId)){
+    throw ApiError.badRequest("Invalid task id")
+  }
+  if(!Types.ObjectId.isValid(workspaceId)){
+    throw ApiError.badRequest("Invalid workspace id")
+  }
+  if(!Types.ObjectId.isValid(projectId)){
+    throw ApiError.badRequest("Invalid project id")
+  }
+  if(!Types.ObjectId.isValid(userId)){
+    throw ApiError.badRequest("Invalid user id")
+  }
+  const task = await Task.findById(taskId)
+  if(!task){
+    throw ApiError.notFound("task not found")
+  }
+  if(task.workspaceId.toString() !== workspaceId){
+    throw ApiError.badRequest("task not found in this workspace")
+  }
+  if(task.projectId.toString() !== projectId){
+    throw ApiError.badRequest("task not found in this project")
+  }
+  const isCreator = task.createdBy.toString() === userId;
+  const isAssigned = task.assignedTo?.toString() === userId;
+  const isAdmin = role === "admin";
+  if(!isCreator && !isAssigned && !isAdmin){
+    throw ApiError.unauthorized("Unauthorized to delete this task")
+  }
+  await Task.findByIdAndDelete(taskId)
+  return {
+    message:"task deleted successfully"
+  } 
+
+}

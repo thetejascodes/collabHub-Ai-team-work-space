@@ -1,5 +1,5 @@
 import type { Request, Response, NextFunction } from "express";
-import { createTaskService, getTaskService, getTasksService, updateTaskService } from "../services/task.services.js";
+import { createTaskService, deleteTaskService, getTaskService, getTasksService, updateTaskService } from "../services/task.services.js";
 import { createTaskValidator, getTasksQueryValidator, updateTaskValidator } from "../validators/task.validator.js";
 import ApiError from "../utils/apiError.utils.js";
 
@@ -151,3 +151,36 @@ export const updateTask = async (
     next(error);
   }
 };
+export const deleteTask = async( req:Request,res:Response,next:NextFunction) => {
+  try {
+    const workspaceId = req.params.workspaceId as string;
+    const taskId = req.params.taskId as string;
+    const projectId = req.params.projectId as string;
+    const userId = req.user?.userId as string;
+    const role = req.workspaceMember?.role as string;
+
+    if (!req.workspace) {
+      throw ApiError.badRequest("Workspace is required");
+    }
+
+    if (!workspaceId || !taskId || !projectId) {
+      throw ApiError.badRequest("Workspace ID, Project ID, and Task ID are required");
+    }
+
+    const result = await deleteTaskService({
+      taskId,
+      workspaceId,
+      projectId,
+      userId,
+      role,
+    });
+
+    res.status(200).json({
+      success: true,
+      message: "Task deleted successfully",
+      task: result,
+    }); 
+  } catch (error) {
+    next(error)
+  }
+}
