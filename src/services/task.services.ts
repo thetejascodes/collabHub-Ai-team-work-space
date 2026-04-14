@@ -255,7 +255,7 @@ export const getTaskService = async (data: GetTaskServiceInput) => {
     throw ApiError.badRequest("Invalid workspace id");
   }
   if (!Types.ObjectId.isValid(projectId)) {
-    throw ApiError.badRequest("Invalid project id");
+    throw ApiError.badRequest("Invalid pr oject id");
   }
   if (!Types.ObjectId.isValid(userId)) {
     throw ApiError.badRequest("Invalid user id");
