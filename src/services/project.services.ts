@@ -1,12 +1,14 @@
 import { Types, type SortOrder } from "mongoose";
 import { Project } from "../models/project.model.js";
 import type { IWorkspaceDocument } from "../models/workspace.model.js";
+import { logActivity, ActivityActionTypes, EntityTypes } from "./activity.services.js";
 import ApiError from "../utils/apiError.utils.js";
 
 interface CreateProjectServiceInput {
   name: string;
   description?: string | undefined;
   workspace: IWorkspaceDocument;
+  userId: string;
 }
 
 interface GetProjectsServiceInput {
@@ -23,17 +25,21 @@ interface GetProjectServiceInput {
 }
 
 interface UpdateProjectServiceInput {
-  projectId:string,
-    name?:string,
-    description?:string,
-    leadId?:string
+  projectId: string;
+  name?: string;
+  description?: string;
+  leadId?: string;
+  userId: string;
+  workspaceId: string;
 }
 
 interface DeleteProjectServiceInput {
   projectId: string;
+  userId: string;
+  workspaceId: string;
 }
 export const createProjectService = async (data: CreateProjectServiceInput) => {
-  const { name, description, workspace } = data;
+  const { name, description, workspace, userId } = data;
 
   const projectPayload: {
     name: string;
@@ -49,6 +55,20 @@ export const createProjectService = async (data: CreateProjectServiceInput) => {
   }
 
   const project = await Project.create(projectPayload);
+
+  // Log activity
+  await logActivity({
+    workspaceId: workspace._id.toString(),
+    userId: userId,
+    actionType: ActivityActionTypes.PROJECT_CREATED,
+    entityType: EntityTypes.PROJECT,
+    entityId: project._id,
+    message: `Project "${project.name}" created`,
+    details: {
+      name: project.name,
+      description: project.description,
+    },
+  });
 
   return project;
 };
@@ -135,7 +155,7 @@ export const getProjectService = async (data: GetProjectServiceInput) => {
 };
 
 export const updateProjectService = async(data:UpdateProjectServiceInput) => {
-  const {projectId,name,description,leadId} =  data;
+  const {projectId, name, description, leadId, userId, workspaceId} =  data;
   if(!Types.ObjectId.isValid(projectId)){
     throw ApiError.badRequest('Invalid project id')
   }
@@ -143,21 +163,48 @@ export const updateProjectService = async(data:UpdateProjectServiceInput) => {
     throw ApiError.badRequest("Invalid lead id");
   }
   const updateData : Record<string,any> = {};
-  if(name !== undefined) updateData.name = name;
-  if(description !== undefined) updateData.description = description;
-  if(leadId !== undefined) updateData.leadId = leadId;
+  const changedFields: string[] = [];
 
-  const project = await Project.findByIdAndUpdate(projectId,updateData,{ new: true, runValidators: true })
+  if(name !== undefined) {
+    updateData.name = name;
+    changedFields.push('name');
+  }
+  if(description !== undefined) {
+    updateData.description = description;
+    changedFields.push('description');
+  }
+  if(leadId !== undefined) {
+    updateData.leadId = leadId;
+    changedFields.push('leadId');
+  }
+
+  const project = await Project.findByIdAndUpdate(projectId, updateData, { new: true, runValidators: true })
 
   if (!project) {
     throw ApiError.notFound("Project not found or access denied");
   }
 
+  // Log activity
+  await logActivity({
+    workspaceId: workspaceId,
+    userId: userId,
+    actionType: ActivityActionTypes.PROJECT_UPDATED,
+    entityType: EntityTypes.PROJECT,
+    entityId: projectId,
+    message: `Project "${project.name}" updated`,
+    details: {
+      changedFields,
+      name: project.name,
+      description: project.description,
+      leadId: project.leadId,
+    },
+  });
+
   return project;
 }
 
 export const deleteProjectService = async(data:DeleteProjectServiceInput)=>{
-  const { projectId } = data;
+  const { projectId, userId, workspaceId } = data;
   if (!Types.ObjectId.isValid(projectId)) {
     throw ApiError.badRequest("Invalid project ID");
   }
@@ -167,6 +214,20 @@ export const deleteProjectService = async(data:DeleteProjectServiceInput)=>{
   if (!project) {
     throw ApiError.notFound("Project not found");
   }
+
+  // Log activity
+  await logActivity({
+    workspaceId: workspaceId,
+    userId: userId,
+    actionType: ActivityActionTypes.PROJECT_DELETED,
+    entityType: EntityTypes.PROJECT,
+    entityId: projectId,
+    message: `Project "${project.name}" deleted`,
+    details: {
+      name: project.name,
+      description: project.description,
+    },
+  });
 
   return;
 };

@@ -1,6 +1,7 @@
 import { Types, type SortOrder } from "mongoose";
 import { Project } from "../models/project.model.js";
 import { Task } from "../models/task.model.js";
+import { logActivity, ActivityActionTypes, EntityTypes } from "./activity.services.js";
 import ApiError from "../utils/apiError.utils.js";
 
 interface TaskCreateServiceInput {
@@ -133,6 +134,22 @@ export const createTaskService = async (data: TaskCreateServiceInput) => {
   }
 
   const task = await Task.create(taskPayload);
+
+  // Log activity
+  await logActivity({
+    workspaceId: workspaceId,
+    userId: createdBy,
+    actionType: ActivityActionTypes.TASK_CREATED,
+    entityType: EntityTypes.TASK,
+    entityId: task._id,
+    message: `Task "${task.title}" created`,
+    details: {
+      title: task.title,
+      projectId: task.projectId,
+      status: task.status,
+      priority: task.priority,
+    },
+  });
 
   return task;
 };
@@ -339,6 +356,34 @@ export const updateTaskService = async (data: UpdateTaskServiceInput) => {
     .populate("createdBy", "name email")
     .populate("projectId", "name");
 
+  // Log activity for task update
+  const changedFields = Object.keys(updateFields);
+  await logActivity({
+    workspaceId: workspaceId,
+    userId: userId,
+    actionType: ActivityActionTypes.TASK_UPDATED,
+    entityType: EntityTypes.TASK,
+    entityId: taskId,
+    message: `Task "${updatedTask?.title}" updated`,
+    details: {
+      changedFields,
+      oldValues: {
+        title: existingTask.title,
+        status: existingTask.status,
+        priority: existingTask.priority,
+        assignedTo: existingTask.assignedTo,
+        dueDate: existingTask.dueDate,
+      },
+      newValues: {
+        title: updatedTask?.title,
+        status: updatedTask?.status,
+        priority: updatedTask?.priority,
+        assignedTo: updatedTask?.assignedTo,
+        dueDate: updatedTask?.dueDate,
+      },
+    },
+  });
+
   return updatedTask;
 };
 
@@ -372,6 +417,23 @@ export const deleteTaskService = async(data:DeleteTaskServiceInput) => {
   if(!isCreator && !isAssigned && !isAdmin){
     throw ApiError.unauthorized("Unauthorized to delete this task")
   }
+
+  // Log activity before deletion
+  await logActivity({
+    workspaceId: workspaceId,
+    userId: userId,
+    actionType: ActivityActionTypes.TASK_DELETED,
+    entityType: EntityTypes.TASK,
+    entityId: taskId,
+    message: `Task "${task.title}" deleted`,
+    details: {
+      title: task.title,
+      projectId: task.projectId,
+      status: task.status,
+      priority: task.priority,
+    },
+  });
+
   await Task.findByIdAndDelete(taskId)
   return {
     message:"task deleted successfully"

@@ -22,6 +22,11 @@ export const register = async (req: Request, res: Response, next: NextFunction) 
       sameSite: "strict",
     });
 
+    res.cookie("accessToken", accessToken, {
+      httpOnly: true,
+      sameSite: "strict",
+    });
+
     res.status(201).json({
       message: "User created",
       accessToken,
@@ -46,6 +51,11 @@ export const login = async (req: Request, res: Response, next: NextFunction) => 
       await loginUser(email, password);
 
     res.cookie("refreshToken", refreshToken, {
+      httpOnly: true,
+      sameSite: "strict",
+    });
+
+    res.cookie("accessToken", accessToken, {
       httpOnly: true,
       sameSite: "strict",
     });

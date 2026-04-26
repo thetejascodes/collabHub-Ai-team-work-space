@@ -22,14 +22,20 @@ export const createProject = async (
     }
 
     const workspace = req.workspace;
+    const userId = req.user?.userId;
 
     if (!workspace) {
       throw ApiError.badRequest("Workspace is required");
     }
 
+    if (!userId) {
+      throw ApiError.unauthorized("Unauthorized");
+    }
+
     const project = await createProjectService({
       ...parsed.data,
       workspace,
+      userId,
     });
 
     res.status(201).json(project);
@@ -92,9 +98,19 @@ export const updateProject = async(req:Request,res:Response,next:NextFunction)=>
   try {
     const projectId = req.params.projectId as string;
     const {name,description,leadId} = req.body;
+    const userId = req.user?.userId;
+    const workspace = req.workspace;
 
     if (typeof projectId !== "string") {
       throw ApiError.badRequest("Project ID is required");
+    }
+    
+    if (!userId) {
+      throw ApiError.unauthorized("Unauthorized");
+    }
+
+    if (!workspace) {
+      throw ApiError.badRequest("Workspace is required");
     }
     
     if(!name && !description && !leadId){
@@ -105,7 +121,9 @@ export const updateProject = async(req:Request,res:Response,next:NextFunction)=>
       projectId,
       name,
       description,
-      leadId
+      leadId,
+      userId,
+      workspaceId: workspace._id.toString(),
     });
 
     res.status(200).json(result);
@@ -121,13 +139,25 @@ export const deleteProject = async (
 ) => {
   try {
     const projectId = req.params.projectId as string;
+    const userId = req.user?.userId;
+    const workspace = req.workspace;
 
     if (typeof projectId !== "string") {
       throw ApiError.badRequest("Project ID is required");
     }
 
+    if (!userId) {
+      throw ApiError.unauthorized("Unauthorized");
+    }
+
+    if (!workspace) {
+      throw ApiError.badRequest("Workspace is required");
+    }
+
     await deleteProjectService({
       projectId,
+      userId,
+      workspaceId: workspace._id.toString(),
     });
 
     res.status(204).json();

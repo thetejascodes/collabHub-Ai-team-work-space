@@ -7,14 +7,11 @@ export const authMiddleware = (
   next: NextFunction,
 ) => {
   const authHeader = req.headers.authorization;
-  if (!authHeader) {
-    return res.status(401).json({ message: "Unauthorized" });
-  }
-
-  const token = authHeader.split(" ")[1];
+  const cookieToken = req.cookies?.accessToken as string | undefined;
+  const token = authHeader?.split(" ")[1] ?? cookieToken;
 
   if (!token) {
-    return res.status(401).json({ message: "Token missing" });
+    return res.status(401).json({ message: "Unauthorized" });
   }
 
   try {

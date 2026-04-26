@@ -94,14 +94,21 @@ export const inviteWorkspaceMember = async (
   try {
     const workspace = req.workspace;
     const userFromBody = req.body;
+    const userId = req.user?.userId;
 
     if (!workspace) {
       throw ApiError.badRequest("Workspace is required");
     }
 
+    if (!userId) {
+      throw ApiError.unauthorized("Unauthorized");
+    }
+
     const result = await inviteWorkspaceMemberService({
       workspace,
       userFromBody,
+      userId,
+      workspaceId: workspace._id.toString(),
     });
 
     if (typeof result === "string") {
@@ -125,6 +132,7 @@ export const removeMemberFromWorkspace = async (
   try {
     const workspace = req.workspace;
     const memberId = typeof req.params.memberId === "string" ? req.params.memberId : undefined;
+    const userId = req.user?.userId;
 
     if (!workspace) {
       throw ApiError.badRequest("Workspace is required");
@@ -134,9 +142,15 @@ export const removeMemberFromWorkspace = async (
       throw ApiError.badRequest("Member id is required");
     }
 
+    if (!userId) {
+      throw ApiError.unauthorized("Unauthorized");
+    }
+
     await removeMemberFromWorkspaceServices({
       workspace,
       memberId,
+      userId,
+      workspaceId: workspace._id.toString(),
     });
     res.sendStatus(204);
   } catch (error) {
@@ -153,15 +167,22 @@ export const changeMemberRole = async (
     const workspace = req.workspace;
     const userIdFromBody = req.body.userId as string;
     const roleFromBody = req.body.role as "owner" | "admin" | "member";
+    const userId = req.user?.userId;
 
     if (!workspace) {
       throw ApiError.badRequest("Workspace is required");
+    }
+
+    if (!userId) {
+      throw ApiError.unauthorized("Unauthorized");
     }
 
     const result = await changeMemberRoleServices({
       workspace,
       userIdFromBody,
       roleFromBody,
+      userId,
+      workspaceId: workspace._id.toString(),
     });
 
     return res.status(200).json({
@@ -189,6 +210,7 @@ export const leaveWorkspace = async (
     const workspace = await leaveWorkspaceService({
       workspace: currentWorkspace,
       user,
+      workspaceId: currentWorkspace._id.toString(),
     });
     res.status(200).json(workspace);
   } catch (error) {
@@ -203,9 +225,14 @@ export const updateWorkspace = async (
 ) => {
   try {
     const workspace = req.workspace;
+    const userId = req.user?.userId;
 
     if (!workspace) {
       throw ApiError.badRequest("Workspace is required");
+    }
+
+    if (!userId) {
+      throw ApiError.unauthorized("Unauthorized");
     }
 
     const parsed = updateWorkspaceValidator.safeParse(req.body);
@@ -217,6 +244,8 @@ export const updateWorkspace = async (
     const updatedWorkspace = await updateWorkspaceService({
       workspace,
       ...parsed.data,
+      userId,
+      workspaceId: workspace._id.toString(),
     });
 
     return res.status(200).json(updatedWorkspace);
@@ -232,13 +261,20 @@ export const deleteWorkspace = async (
 ) => {
   try {
     const workspace = req.workspace;
+    const userId = req.user?.userId;
 
     if (!workspace) {
       throw ApiError.badRequest("Workspace is required");
     }
 
+    if (!userId) {
+      throw ApiError.unauthorized("Unauthorized");
+    }
+
     await deleteWorkspaceServices({
       workspace,
+      userId,
+      workspaceId: workspace._id.toString(),
     });
     res.status(204).json();
   } catch (error) {
