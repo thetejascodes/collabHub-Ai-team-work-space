@@ -3,6 +3,7 @@ import { Types } from "mongoose";
 import ApiError from "../utils/apiError.utils.js";
 import { Project } from "../models/project.model.js";
 import { Workspace } from "../models/workspace.model.js";
+import { Task } from "../models/task.model.js";
 
 export const checkWorkspaceAccess = (requiredRoles: string[] = []) => {
   return async (req: Request, _res: Response, next: NextFunction) => {
@@ -13,6 +14,12 @@ export const checkWorkspaceAccess = (requiredRoles: string[] = []) => {
         (typeof req.body?.workspaceId === "string" ? req.body.workspaceId : undefined);
       const projectId =
         typeof req.params.projectId === "string" ? req.params.projectId : undefined;
+      const taskId =
+        typeof req.params.taskId === "string"
+          ? req.params.taskId
+          : typeof req.body?.taskId === "string"
+            ? req.body.taskId
+            : undefined;
 
       if (!userId) {
         throw ApiError.unauthorized("Unauthorized");
@@ -30,6 +37,20 @@ export const checkWorkspaceAccess = (requiredRoles: string[] = []) => {
         }
 
         workspaceId = project.workspaceId.toString();
+      }
+
+      if (!workspaceId && taskId) {
+        if (!Types.ObjectId.isValid(taskId)) {
+          throw ApiError.badRequest("Invalid task ID");
+        }
+
+        const task = await Task.findById(taskId).select("workspaceId").lean();
+
+        if (!task) {
+          throw ApiError.notFound("Task not found");
+        }
+
+        workspaceId = task.workspaceId.toString();
       }
 
       if (!workspaceId) {
