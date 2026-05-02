@@ -4,9 +4,16 @@ export interface ICommentCreate {
     taskId: Types.ObjectId;
     workspaceId: Types.ObjectId;
     userId: Types.ObjectId;
+    parentCommentId?: Types.ObjectId;
     type: 'text' | 'file' | 'mention';
     content: string;
-    mentions:[Types.ObjectId];
+    mentions: Types.ObjectId[];
+    attachments?: {
+      filename: string;
+      url: string;
+      mimeType?: string;
+      size?: number;
+    }[];
 }
 
 export interface IComment extends Document, ICommentCreate{
@@ -34,6 +41,12 @@ const commentSchema = new Schema<IComment>({
         required:true,
         index:true
     },
+    parentCommentId:{
+      type:Schema.Types.ObjectId,
+      ref:'Comment',
+      required:false,
+      index:true,
+    },
     type:{
         type:String,
         enum:['text','file','mention'],
@@ -51,11 +64,27 @@ const commentSchema = new Schema<IComment>({
         type:[Types.ObjectId],
         ref:'User',
         default:[],
+    },
+    attachments:{
+      type:[{
+        filename:{ type:String, required:true },
+        url:{ type:String, required:true },
+        mimeType:{ type:String },
+        size:{ type:Number },
+      }],
+      default:[],
     }
 },{timestamps:true})
 
 commentSchema.index({ createdAt: -1, _id: -1 });
-commentSchema.index({ taskId: 1, workspaceId: 1 });
+commentSchema.index({ taskId: 1, workspaceId: 1, parentCommentId: 1 });
+
+commentSchema.virtual('replies', {
+  ref: 'Comment',
+  localField: '_id',
+  foreignField: 'parentCommentId',
+  justOne: false,
+});
 
 commentSchema.set('toJSON', { virtuals: true });
 commentSchema.set('toObject', { virtuals: true });

@@ -12,11 +12,9 @@ export const getWorkspaceActivity = async (
   next: NextFunction
 ) => {
   try {
-    console.log("Received request to fetch workspace activities with params:", req.params, "and query:", req.query);
     const workspaceId = req.params.workspaceId as string;
     const limit = parseInt(req.query.limit as string) || 50;
     const skip = parseInt(req.query.skip as string) || 0;
-    console.log(`Fetching activities for workspace ${workspaceId} with limit ${limit} and skip ${skip}`);
     const activities = await getWorkspaceActivities(workspaceId, limit, skip);
     res.status(200).json(activities);
   } catch (error) {

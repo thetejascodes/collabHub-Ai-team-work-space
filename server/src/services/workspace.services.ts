@@ -76,7 +76,7 @@ export const createWorkspaceService = async (data: CreateWorkspaceServiceInput) 
   await logActivity({
     workspaceId: workspace._id.toString(),
     userId: data.owner,
-    actionType: ActivityActionTypes.USER_JOINED,
+    actionType: ActivityActionTypes.WORKSPACE_CREATED,
     entityType: EntityTypes.WORKSPACE,
     entityId: workspace._id,
     message: `Workspace "${workspace.name}" created`,
@@ -203,7 +203,7 @@ export const changeMemberRoleServices = async (data: ChangeMemberRoleServiceInpu
     await logActivity({
       workspaceId: workspaceId,
       userId: userId,
-      actionType: ActivityActionTypes.USER_JOINED,
+      actionType: ActivityActionTypes.MEMBER_ROLE_CHANGED,
       entityType: EntityTypes.USER,
       entityId: userIdFromBody,
       message: `Member role changed from ${oldRole} to ${roleFromBody}`,
@@ -269,7 +269,7 @@ export const updateWorkspaceService = async (data: UpdateWorkspaceServiceInput) 
   await logActivity({
     workspaceId: workspaceId,
     userId: userId,
-    actionType: ActivityActionTypes.USER_JOINED,
+    actionType: ActivityActionTypes.WORKSPACE_UPDATED,
     entityType: EntityTypes.WORKSPACE,
     entityId: workspace._id,
     message: `Workspace updated`,
@@ -292,7 +292,7 @@ export const deleteWorkspaceServices = async(data: DeleteWorkspaceServiceInput)=
    await logActivity({
      workspaceId: workspaceId,
      userId: userId,
-     actionType: ActivityActionTypes.USER_LEFT,
+     actionType: ActivityActionTypes.WORKSPACE_DELETED,
      entityType: EntityTypes.WORKSPACE,
      entityId: workspace._id,
      message: `Workspace deleted`,

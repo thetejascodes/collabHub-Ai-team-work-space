@@ -12,14 +12,14 @@ const router = Router();
 router.get(
   "/:workspaceId/activities",
   authMiddleware,
-  checkWorkspaceAccess,
+  checkWorkspaceAccess(),
   getWorkspaceActivity
 );
 
 router.get(
   "/:workspaceId/activities/unread",
   authMiddleware,
-  checkWorkspaceAccess,
+  checkWorkspaceAccess(),
   getUnreadActivity
 );
 

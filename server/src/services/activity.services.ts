@@ -1,4 +1,6 @@
 import { Activity, ActivityActionTypes, EntityTypes, type IActivity } from "../models/activity.model.js";
+import { Notification } from "../models/notification.model.js";
+import { Workspace } from "../models/workspace.model.js";
 import { Types } from "mongoose";
 import ApiError from "../utils/apiError.utils.js";
 
@@ -29,7 +31,43 @@ export const logActivity = async (input: LogActivityInput): Promise<IActivity> =
       metadata: input.metadata || null,
     });
 
-    return await activity.save();
+    const savedActivity = await activity.save();
+
+    // Create notifications for workspace members except the actor
+    const workspace = await Workspace.findById(input.workspaceId).populate('members.user');
+    if (workspace) {
+      const actorId = new Types.ObjectId(input.userId);
+      const memberIds = workspace.members.map((member) => {
+        const user = member.user as any;
+        return user && typeof user === 'object' && 'equals' in user
+          ? user
+          : new Types.ObjectId(user);
+      });
+
+      let recipients = memberIds.filter((memberId) => !memberId.equals(actorId));
+
+      // If there are no other workspace members yet, notify the actor too.
+      if (recipients.length === 0 && memberIds.some((memberId) => memberId.equals(actorId))) {
+        recipients = [actorId];
+      }
+
+      const notifications = recipients.map((recipientId) => ({
+        userId: recipientId,
+        workspaceId: input.workspaceId,
+        actionType: input.actionType,
+        entityType: input.entityType,
+        entityId: input.entityId,
+        message: input.message,
+        isRead: false,
+        metadata: input.metadata,
+      }));
+
+      if (notifications.length > 0) {
+        await Notification.insertMany(notifications);
+      }
+    }
+
+    return savedActivity;
   } catch (error) {
     console.error("Activity logging error:", error);
     throw error;
