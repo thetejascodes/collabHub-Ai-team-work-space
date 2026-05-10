@@ -18,6 +18,8 @@ import { TaskDetailPage } from './pages/TaskDetailPage'
 import { WorkspaceDetailPage } from './pages/WorkspaceDetailPage'
 import { WorkspacePage } from './pages/WorkspacePage'
 
+import { LandingPage } from './pages/LandingPage'
+
 export interface RouterContext {
   auth: AuthContextValue
   workspace: WorkspaceContextValue
@@ -36,7 +38,7 @@ const rootRoute = createRootRouteWithContext<RouterContext>()({
 const indexRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/',
-  component: IndexRedirect,
+  component: LandingPage,
 })
 
 const authRoute = createRoute({
@@ -115,27 +117,7 @@ declare module '@tanstack/react-router' {
   }
 }
 
-function IndexRedirect() {
-  const { isAuthenticated, isBootstrapping } = useAuth()
-  const navigate = useNavigate()
 
-  useEffect(() => {
-    if (isBootstrapping) {
-      return
-    }
-
-    void navigate({
-      to: isAuthenticated ? '/workspaces' : '/auth',
-      replace: true,
-    })
-  }, [isAuthenticated, isBootstrapping, navigate])
-
-  return (
-    <div className="page-shell centered-shell">
-      <Spinner label="Preparing CollabHub..." />
-    </div>
-  )
-}
 
 function ProtectedLayout() {
   const auth = useAuth()
