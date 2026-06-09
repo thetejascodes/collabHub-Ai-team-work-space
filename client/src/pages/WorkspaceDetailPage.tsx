@@ -83,75 +83,75 @@ export const WorkspaceDetailPage = () => {
           </section>
 
           <div className="page-grid">
-          <section className="card">
-            <div className="section-head">
-              <div>
-                <p className="eyebrow">Settings</p>
-                <h3>Workspace profile</h3>
+            <section className="card">
+              <div className="section-head">
+                <div>
+                  <p className="eyebrow">Settings</p>
+                  <h3>Workspace profile</h3>
+                </div>
               </div>
-            </div>
-            <WorkspaceForm
-              initialValues={workspace}
-              submitLabel={canManage ? 'Save workspace' : 'View workspace'}
-              onSubmit={async (payload) => {
-                if (!canManage) {
-                  return
-                }
-                const updated = await workspaceService.updateWorkspace(workspaceId, payload)
-                setWorkspace(updated)
-                setCurrentWorkspace(updated)
-              }}
-            />
-          </section>
+              <WorkspaceForm
+                initialValues={workspace}
+                submitLabel={canManage ? 'Save workspace' : 'View workspace'}
+                onSubmit={async (payload) => {
+                  if (!canManage) {
+                    return
+                  }
+                  const updated = await workspaceService.updateWorkspace(workspaceId, payload)
+                  setWorkspace(updated)
+                  setCurrentWorkspace(updated)
+                }}
+              />
+            </section>
 
-          <section className="card">
-            <div className="section-head">
-              <div>
-                <p className="eyebrow">Members</p>
-                <h3>Access and roles</h3>
+            <section className="card">
+              <div className="section-head">
+                <div>
+                  <p className="eyebrow">Members</p>
+                  <h3>Access and roles</h3>
+                </div>
               </div>
-            </div>
-            {canManage ? (
-              <InviteMemberForm
-                onInvite={async (userId) => {
-                  await workspaceService.inviteMember(workspaceId, userId)
+              {canManage ? (
+                <InviteMemberForm
+                  onInvite={async (userId) => {
+                    await workspaceService.inviteMember(workspaceId, userId)
+                    await loadWorkspace()
+                  }}
+                />
+              ) : null}
+              <MemberList
+                members={workspace.members}
+                currentUserRole={currentRole}
+                onRoleChange={async (userId, role) => {
+                  if (currentRole !== 'owner') {
+                    return
+                  }
+
+                  await workspaceService.changeRole(workspaceId, userId, role as WorkspaceRole)
+                  await loadWorkspace()
+                }}
+                onRemove={async (userId) => {
+                  if (!canManage) {
+                    return
+                  }
+                  await workspaceService.removeMember(workspaceId, userId)
                   await loadWorkspace()
                 }}
               />
-            ) : null}
-            <MemberList
-              members={workspace.members}
-              currentUserRole={currentRole}
-              onRoleChange={async (userId, role) => {
-                if (currentRole !== 'owner') {
-                  return
-                }
+            </section>
 
-                await workspaceService.changeRole(workspaceId, userId, role as WorkspaceRole)
-                await loadWorkspace()
-              }}
-              onRemove={async (userId) => {
-                if (!canManage) {
-                  return
-                }
-                await workspaceService.removeMember(workspaceId, userId)
-                await loadWorkspace()
-              }}
-            />
-          </section>
-
-          <section className="card card-span">
-            <div className="section-head">
-              <div>
-                <p className="eyebrow">Projects</p>
-                <h3>Delivery streams</h3>
+            <section className="card card-span">
+              <div className="section-head">
+                <div>
+                  <p className="eyebrow">Projects</p>
+                  <h3>Delivery streams</h3>
+                </div>
+                {canManage ? <Button onClick={() => setProjectModalOpen(true)}>Create project</Button> : null}
               </div>
-              {canManage ? <Button onClick={() => setProjectModalOpen(true)}>Create project</Button> : null}
-            </div>
-            <ProjectList projects={projects} workspaceId={workspaceId} />
-          </section>
+              <ProjectList projects={projects} workspaceId={workspaceId} />
+            </section>
 
-          <ActivityFeed activities={activities} />
+            <ActivityFeed activities={activities} />
           </div>
         </>
       ) : null}

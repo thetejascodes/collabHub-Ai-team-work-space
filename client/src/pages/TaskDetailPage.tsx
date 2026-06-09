@@ -64,46 +64,46 @@ export const TaskDetailPage = () => {
           </section>
 
           <div className="page-grid">
-          <TaskDetail task={task} />
-          <section className="card">
-            <div className="section-head">
-              <div>
-                <p className="eyebrow">Updates</p>
-                <h3>Edit task</h3>
+            <TaskDetail task={task} />
+            <section className="card">
+              <div className="section-head">
+                <div>
+                  <p className="eyebrow">Updates</p>
+                  <h3>Edit task</h3>
+                </div>
               </div>
-            </div>
-            <TaskForm
-              initialValues={{
-                title: task.title,
-                description: task.description,
-                status: task.status,
-                priority: task.priority,
-                dueDate: task.dueDate,
-              }}
-              submitLabel={canEdit ? 'Update task' : 'View task'}
-              onSubmit={async (payload) => {
-                if (!canEdit) {
-                  return
-                }
+              <TaskForm
+                initialValues={{
+                  title: task.title,
+                  description: task.description,
+                  status: task.status,
+                  priority: task.priority,
+                  dueDate: task.dueDate,
+                }}
+                submitLabel={canEdit ? 'Update task' : 'View task'}
+                onSubmit={async (payload) => {
+                  if (!canEdit) {
+                    return
+                  }
 
-                const response = await taskService.updateTask(workspaceId, projectId, taskId, payload)
-                setTask(response.task)
-              }}
-            />
-          </section>
-          <div className="card-span">
-            <CommentThread
-              comments={comments}
-              onCreate={async (content) => {
-                await commentService.createComment(taskId, { content })
-                await loadTask()
-              }}
-              onDelete={async (commentId) => {
-                await commentService.deleteComment(taskId, commentId)
-                await loadTask()
-              }}
-            />
-          </div>
+                  const response = await taskService.updateTask(workspaceId, projectId, taskId, payload)
+                  setTask(response.task)
+                }}
+              />
+            </section>
+            <div className="card-span">
+              <CommentThread
+                comments={comments}
+                onCreate={async (content) => {
+                  await commentService.createComment(taskId, { content })
+                  await loadTask()
+                }}
+                onDelete={async (commentId) => {
+                  await commentService.deleteComment(taskId, commentId)
+                  await loadTask()
+                }}
+              />
+            </div>
           </div>
         </>
       ) : null}

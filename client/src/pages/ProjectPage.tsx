@@ -80,49 +80,49 @@ export const ProjectPage = () => {
           </section>
 
           <div className="page-grid">
-          <section className="card">
-            <div className="section-head">
-              <div>
-                <p className="eyebrow">Project</p>
-                <h3>Project details</h3>
-              </div>
-            </div>
-            <ProjectForm
-              initialValues={project}
-              submitLabel={canManage ? 'Save project' : 'View project'}
-              onSubmit={async (payload) => {
-                if (!canManage) {
-                  return
-                }
-
-                const updated = await projectService.updateProject(projectId, payload)
-                setProject(updated)
-              }}
-            />
-          </section>
-
-          <section className="card card-span">
-            <div className="section-head">
-              <div>
-                <p className="eyebrow">Tasks</p>
-                <h3>Execution board</h3>
-              </div>
-            </div>
-            <TaskFilters status={status} priority={priority} onStatusChange={setStatus} onPriorityChange={setPriority} />
-            <TaskList tasks={tasks} workspaceId={workspaceId} projectId={projectId} />
-          </section>
-
-          {workspace ? (
             <section className="card">
               <div className="section-head">
                 <div>
-                  <p className="eyebrow">Context</p>
-                  <h3>{workspace.name}</h3>
+                  <p className="eyebrow">Project</p>
+                  <h3>Project details</h3>
                 </div>
               </div>
-              <p>{workspace.description || 'This workspace is ready for more structure.'}</p>
+              <ProjectForm
+                initialValues={project}
+                submitLabel={canManage ? 'Save project' : 'View project'}
+                onSubmit={async (payload) => {
+                  if (!canManage) {
+                    return
+                  }
+
+                  const updated = await projectService.updateProject(projectId, payload)
+                  setProject(updated)
+                }}
+              />
             </section>
-          ) : null}
+
+            <section className="card card-span">
+              <div className="section-head">
+                <div>
+                  <p className="eyebrow">Tasks</p>
+                  <h3>Execution board</h3>
+                </div>
+              </div>
+              <TaskFilters status={status} priority={priority} onStatusChange={setStatus} onPriorityChange={setPriority} />
+              <TaskList tasks={tasks} workspaceId={workspaceId} projectId={projectId} />
+            </section>
+
+            {workspace ? (
+              <section className="card">
+                <div className="section-head">
+                  <div>
+                    <p className="eyebrow">Context</p>
+                    <h3>{workspace.name}</h3>
+                  </div>
+                </div>
+                <p>{workspace.description || 'This workspace is ready for more structure.'}</p>
+              </section>
+            ) : null}
           </div>
         </>
       ) : null}
